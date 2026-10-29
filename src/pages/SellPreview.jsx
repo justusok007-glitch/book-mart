@@ -402,7 +402,7 @@ export default function SellPreview({ demo = false }) {
               {sub.items.map((item) => {
                 const inCart = item.variants.reduce((n, v) => n + (qtyOf[v.id] || 0), 0)
                 const left = item.variants.reduce((n, v) => n + Math.max(0, stockOf(v.id)), 0) - inCart
-                const low = item.variants.some((v) => stockOf(v.id) - (qtyOf[v.id] || 0) <= (item.lowStock ?? 0))
+                const low = left <= (item.lowStock ?? 0)
                 return (
                   <button
                     key={item.id}

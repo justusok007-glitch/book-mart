@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import { ALL_VARIANTS, SAMPLE_CATALOG, SAMPLE_CUSTOMERS } from '../lib/sampleCatalog'
 import { Badge, Button, Field, IconButton, Notice, OfflineBanner, PageHeader, Rs, Sheet } from '../components/ui'
 import Icon from '../components/Icon'
+import { LangSwitch } from './Login'
 
 /* ---------- small pieces ---------- */
 
@@ -115,9 +116,10 @@ function ReceiptPreview({ lines, subtotal, discount, total, pay, paid, customer 
 
 /* ---------- main screen ---------- */
 
-export default function SellPreview() {
+export default function SellPreview({ demo = false }) {
   const { t, pick } = useLang()
-  const { can } = useAuth()
+  const auth = useAuth()
+  const can = demo ? () => true : auth.can
   const [mode, setMode] = useState('select')
   const [catId, setCatId] = useState(SAMPLE_CATALOG[0].id)
   const [subId, setSubId] = useState(SAMPLE_CATALOG[0].subs[0].id)
@@ -198,7 +200,16 @@ export default function SellPreview() {
 
   return (
     <div className="min-h-screen pb-36">
-      <PageHeader title={t('sell')} right={<span className="me-2"><Badge tone="lime">{t('preview')}</Badge></span>} />
+      <PageHeader
+        title={t('sell')}
+        back={!demo}
+        right={
+          <span className="me-2 flex items-center gap-2">
+            {demo && <LangSwitch />}
+            <Badge tone="lime">{t('preview')}</Badge>
+          </span>
+        }
+      />
       <OfflineBanner />
 
       <main className="mx-auto max-w-3xl px-4 pt-4">

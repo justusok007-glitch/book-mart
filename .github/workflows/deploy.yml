@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -24,6 +24,12 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run build
+      - name: Keep a copy of the build on the build-output branch (used for design checks)
+        run: |
+          cd dist
+          git init -q && git checkout -q -b build-output
+          git add -A && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "build ${{ github.sha }}"
+          git push -q -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} build-output
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { LangProvider, useLang } from './context/LangContext'
 import { Button, EmptyState, FullScreenLoader, Page } from './components/ui'
@@ -44,6 +44,9 @@ function Blocked() {
 
 function Shell() {
   const { user, loading, blocked } = useAuth()
+  const { pathname } = useLocation()
+  // Public link for the client to try the Sell design without logging in (sample data only)
+  if (pathname === '/demo/sell') return <SellPreview demo />
   if (loading) return <FullScreenLoader />
   if (!user) return <Login />
   if (blocked) return <Blocked />

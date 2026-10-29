@@ -214,11 +214,19 @@ export default function SellPreview({ demo = false }) {
   }
 
   // real camera: find the scanned barcode, add it, then get ready for the next one
+  // the same barcode is ignored for 3 seconds so a barcode left in view is not added again and again;
+  // to add 2 of the same, scan again after a moment or use + in the cart
+  const lastScan = useRef({ code: '', at: 0 })
   function onScanned(code) {
-    const hit = entries.find((e) => e.variant.code && e.variant.code === code)
-    if (hit) add(hit.item, hit.variant)
-    else showToast(`${t('barcodeNotFound')}: ${code}`)
-    setTimeout(() => setScanKey((k) => k + 1), 900)
+    const now = Date.now()
+    const repeat = lastScan.current.code === code && now - lastScan.current.at < 3000
+    lastScan.current = { code, at: now }
+    if (!repeat) {
+      const hit = entries.find((e) => e.variant.code && e.variant.code === code)
+      if (hit) add(hit.item, hit.variant)
+      else showToast(`${t('barcodeNotFound')}: ${code}`)
+    }
+    setTimeout(() => setScanKey((k) => k + 1), repeat ? 600 : 1200)
   }
 
   function complete() {

@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, up
 import { db } from '../lib/firebase'
 import { PERMISSION_GROUPS } from '../lib/permissions'
 import { useLang } from '../context/LangContext'
-import { Button, Card, Field, Notice, Page, Sheet } from '../components/ui'
+import { Button, Card, Checkbox, Field, Notice, Page, Sheet } from '../components/ui'
 import Icon from '../components/Icon'
 import { useRoles } from './Users'
 
@@ -41,7 +41,7 @@ function RoleNameForm({ initial, onDone }) {
         <input className="field font-urdu" dir="rtl" value={nameUr} onChange={(e) => setNameUr(e.target.value)} />
       </Field>
       <Notice>{error}</Notice>
-      <Button type="submit" className="w-full py-3">
+      <Button type="submit" size="lg" className="w-full">
         {t('save')}
       </Button>
     </form>
@@ -86,54 +86,65 @@ export default function Roles() {
 
   const count = (r) => Object.values(r.permissions || {}).filter(Boolean).length
 
+  const chip = (active) =>
+    `flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-full border-[1.5px] px-4 font-semibold transition-colors duration-150 ${
+      active ? 'border-charcoal bg-charcoal text-white' : 'border-line bg-white text-ink hover:border-charcoal-500'
+    }`
+
   return (
     <Page title={t('roles')}>
-      <p className="mb-4 text-sm text-muted">{t('rolesIntro')}</p>
+      <p className="mb-4 text-muted">{t('rolesIntro')}</p>
 
-      {/* role chips */}
-      <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
-        <button
-          onClick={() => setSelected('admin')}
-          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 font-semibold ${
-            isAdminRole ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white'
-          }`}
-        >
-          <Icon name="lock" size={15} /> {t('admin')}
+      {/* role selector */}
+      <div className="no-scrollbar -mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1" role="tablist">
+        <button role="tab" aria-selected={isAdminRole} onClick={() => setSelected('admin')} className={chip(isAdminRole)}>
+          <Icon name="lock" size={16} /> {t('admin')}
         </button>
         {roles.map((r) => (
           <button
             key={r.id}
+            role="tab"
+            aria-selected={selected === r.id}
             onClick={() => {
               setSelected(r.id)
               setError('')
             }}
-            className={`shrink-0 rounded-full border px-4 py-2 font-semibold ${
-              selected === r.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white'
-            }`}
+            className={chip(selected === r.id)}
           >
             {pick({ en: r.name, ur: r.nameUr })}
-            <span className="latin ms-1.5 text-xs opacity-70">{count(r)}</span>
+            <span
+              className={`latin rounded-full px-2 text-xs ${selected === r.id ? 'bg-lime text-charcoal' : 'bg-paper text-muted'}`}
+            >
+              {count(r)}
+            </span>
           </button>
         ))}
         <button
           onClick={() => setSheet('new')}
-          className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-brand-500 px-4 py-2 font-semibold text-brand-600"
+          className="flex min-h-12 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-charcoal-500 px-4 font-semibold text-charcoal hover:bg-white"
         >
-          <Icon name="plus" size={16} /> {t('addRole')}
+          <Icon name="plus" size={18} /> {t('addRole')}
         </button>
       </div>
 
-      {isAdminRole && <Notice type="info">{t('adminAllPerms')}</Notice>}
+      {isAdminRole && (
+        <Card className="mb-4 flex items-center gap-3 p-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-charcoal text-white">
+            <Icon name="shield" size={20} />
+          </div>
+          <p className="font-medium">{t('adminAllPerms')}</p>
+        </Card>
+      )}
 
       {role && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <h2 className="flex-1 text-xl font-bold">{pick({ en: role.name, ur: role.nameUr })}</h2>
-          <Button variant="secondary" className="px-3 py-1.5 text-sm" onClick={() => setSheet(role)}>
-            <Icon name="pencil" size={15} /> {t('edit')}
+          <h2 className="min-w-0 flex-1 truncate text-xl font-bold text-charcoal">{pick({ en: role.name, ur: role.nameUr })}</h2>
+          <Button variant="secondary" size="sm" onClick={() => setSheet(role)}>
+            <Icon name="pencil" size={16} /> {t('edit')}
           </Button>
           {!role.system && (
-            <Button variant="secondary" className="px-3 py-1.5 text-sm text-danger" onClick={removeRole}>
-              <Icon name="trash" size={15} /> {t('deleteRole')}
+            <Button variant="danger" size="sm" onClick={removeRole}>
+              <Icon name="trash" size={16} /> {t('deleteRole')}
             </Button>
           )}
         </div>
@@ -144,51 +155,59 @@ export default function Roles() {
         </div>
       )}
 
-      <div className="mt-4 space-y-4">
-        {PERMISSION_GROUPS.map((g) => (
-          <Card key={g.key} className="overflow-hidden">
-            <div className="flex items-center justify-between border-b border-line bg-paper/60 px-4 py-2.5">
-              <h3 className="font-bold">{g.label[lang]}</h3>
-              {!isAdminRole && (
-                <div className="flex gap-1 text-sm">
-                  <button className="rounded-lg px-2 py-0.5 font-semibold text-brand-600 hover:bg-brand-50" onClick={() => setGroup(g, true)}>
-                    {t('selectAll')}
-                  </button>
-                  <button className="rounded-lg px-2 py-0.5 font-semibold text-muted hover:bg-line/50" onClick={() => setGroup(g, false)}>
-                    {t('selectNone')}
-                  </button>
-                </div>
-              )}
-            </div>
-            <ul>
-              {g.perms.map((p) => {
-                const checked = has(p.key)
-                return (
-                  <li key={p.key} className="border-b border-line/70 last:border-0">
-                    <label className={`flex items-center gap-3 px-4 py-3 ${isAdminRole ? '' : 'cursor-pointer active:bg-paper'}`}>
-                      <span
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
-                          checked ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-white'
-                        } ${isAdminRole ? 'opacity-60' : ''}`}
+      <div className="space-y-4">
+        {PERMISSION_GROUPS.map((g) => {
+          const onCount = g.perms.filter((p) => has(p.key)).length
+          return (
+            <Card key={g.key} className="overflow-hidden">
+              <div className="flex min-h-14 items-center justify-between gap-2 border-b border-line bg-paper/70 ps-4 pe-2">
+                <h3 className="font-bold">
+                  {g.label[lang]}
+                  <span className="latin ms-2 text-sm font-semibold text-muted">
+                    {onCount}/{g.perms.length}
+                  </span>
+                </h3>
+                {!isAdminRole && (
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setGroup(g, true)}>
+                      {t('selectAll')}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-muted" onClick={() => setGroup(g, false)}>
+                      {t('selectNone')}
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <ul>
+                {g.perms.map((p) => {
+                  const checked = has(p.key)
+                  return (
+                    <li key={p.key} className="border-b border-line/70 last:border-0">
+                      <label
+                        className={`flex min-h-14 items-center gap-3 px-4 py-2 transition-colors duration-150 ${
+                          isAdminRole ? '' : 'cursor-pointer hover:bg-paper/60 active:bg-paper'
+                        }`}
                       >
-                        {checked && <Icon name="check" size={16} strokeWidth={3} />}
-                      </span>
-                      <input
-                        type="checkbox"
-                        className="sr-only"
-                        checked={checked}
-                        disabled={isAdminRole}
-                        onChange={(e) => setPerm(p.key, e.target.checked)}
-                      />
-                      <span className="flex-1">{p[lang]}</span>
-                    </label>
-                  </li>
-                )
-              })}
-            </ul>
-          </Card>
-        ))}
-        <p className="text-center text-xs text-muted">{t('adminOnlyNote')}</p>
+                        <input
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={checked}
+                          disabled={isAdminRole}
+                          onChange={(e) => setPerm(p.key, e.target.checked)}
+                        />
+                        <Checkbox checked={checked} disabled={isAdminRole} />
+                        <span className={`flex-1 ${checked ? 'text-ink' : 'text-muted'}`}>{p[lang]}</span>
+                      </label>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          )
+        })}
+        <p className="flex items-center justify-center gap-1.5 text-center text-sm text-muted">
+          <Icon name="lock" size={14} /> {t('adminOnlyNote')}
+        </p>
       </div>
 
       <Sheet open={!!sheet} title={sheet === 'new' ? t('addRole') : t('edit')} onClose={() => setSheet(null)}>

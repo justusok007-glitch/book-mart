@@ -4,11 +4,10 @@ import { useLang } from '../context/LangContext'
 import { Button, Field, Notice, OfflineBanner } from '../components/ui'
 import Icon from '../components/Icon'
 
-export function LangSwitch({ dark = false }) {
+export function LangSwitch() {
   const { lang, setLang } = useLang()
-  const base = dark ? 'border-white/30 text-white' : 'border-line text-ink bg-white'
   return (
-    <div className={`inline-flex overflow-hidden rounded-full border ${base}`}>
+    <div role="group" aria-label="Language" className="inline-flex rounded-full border border-line bg-white p-1">
       {[
         ['en', 'English'],
         ['ur', 'اردو'],
@@ -16,9 +15,10 @@ export function LangSwitch({ dark = false }) {
         <button
           key={code}
           onClick={() => setLang(code)}
-          className={`px-3.5 py-1 text-sm font-semibold ${code === 'ur' ? 'font-urdu' : 'latin'} ${
-            lang === code ? (dark ? 'bg-white text-brand-700' : 'bg-brand-600 text-white') : ''
-          }`}
+          aria-pressed={lang === code}
+          className={`min-h-10 min-w-20 cursor-pointer rounded-full px-4 text-sm font-semibold transition-colors duration-150 ${
+            code === 'ur' ? 'font-urdu' : 'latin'
+          } ${lang === code ? 'bg-charcoal text-white' : 'text-ink hover:bg-paper'}`}
         >
           {label}
         </button>
@@ -53,24 +53,20 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-white">
       <OfflineBanner />
-      <div className="relative bg-brand-600 px-6 pb-16 pt-10 text-white">
-        <div className="mx-auto flex max-w-md items-start justify-between">
-          <div>
-            <div className="mb-4 inline-flex rounded-2xl bg-white/10 p-3 text-amber">
-              <Icon name="book" size={34} />
-            </div>
-            <h1 className="text-3xl font-bold">{t('appName')}</h1>
-            <p className="text-white/75">{t('tagline')}</p>
-          </div>
-          <LangSwitch dark />
-        </div>
+      <div className="safe-top flex justify-end px-4 pt-4">
+        <LangSwitch />
       </div>
 
-      <form onSubmit={submit} className="mx-auto -mt-10 w-full max-w-md px-4">
-        <div className="space-y-4 rounded-3xl border border-line bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-bold">{t('signInTitle')}</h2>
+      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pb-10">
+        <div className="mb-8 mt-4 flex flex-col items-center text-center">
+          <img src="./logo.png" alt="Book Mart" className="h-auto w-44" />
+          <p className="mt-3 text-muted">{t('tagline')}</p>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
+          <h1 className="text-2xl font-bold text-charcoal">{t('signInTitle')}</h1>
           <Field label={t('usernameOrEmail')}>
             <input
               className="field latin"
@@ -85,7 +81,7 @@ export default function Login() {
           <Field label={t('password')}>
             <div className="relative">
               <input
-                className="field latin pe-12"
+                className="field latin pe-14"
                 dir="ltr"
                 type={show ? 'text' : 'password'}
                 autoComplete="current-password"
@@ -95,19 +91,25 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShow((s) => !s)}
-                className="absolute inset-y-0 end-0 px-3.5 text-muted"
-                aria-label="show password"
+                className="absolute inset-y-0 end-0 flex w-12 cursor-pointer items-center justify-center text-muted hover:text-ink"
+                aria-label={show ? 'Hide password' : 'Show password'}
+                aria-pressed={show}
               >
                 <Icon name="eye" size={20} />
               </button>
             </div>
           </Field>
           <Notice>{error}</Notice>
-          <Button type="submit" className="w-full py-3.5 text-base" disabled={busy}>
+          <Button type="submit" size="lg" className="w-full" disabled={busy || !username.trim() || !password}>
             {busy ? t('signingIn') : t('signIn')}
           </Button>
+        </form>
+
+        <div className="mt-auto flex items-center justify-center gap-2 pt-10 text-xs text-muted">
+          <span className="h-2 w-2 rounded-full bg-lime" aria-hidden="true" />
+          {t('appName')} · {t('tagline')}
         </div>
-      </form>
+      </div>
     </div>
   )
 }

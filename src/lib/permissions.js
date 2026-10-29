@@ -95,23 +95,37 @@ export const DEFAULT_ROLES = {
   },
 }
 
-// Home screen tiles. "ready" = built; others show "Coming soon" until their phase.
+// Home screen tiles, grouped. "ready" = built; others show their phase badge until built.
+export const FEATURE_GROUPS = [
+  { key: 'stock', en: 'Stock', ur: 'اسٹاک' },
+  { key: 'people', en: 'Customers & Suppliers', ur: 'گاہک اور سپلائرز' },
+  { key: 'money', en: 'Money', ur: 'رقم' },
+  { key: 'reports', en: 'Reports', ur: 'رپورٹس' },
+  { key: 'admin', en: 'Management', ur: 'انتظام' },
+]
+
 export const FEATURES = [
-  { key: 'sell', perm: 'sell', icon: 'cart', en: 'Sell', ur: 'فروخت', phase: 4, big: true },
-  { key: 'buy', perm: 'buy', icon: 'truck', en: 'Buy', ur: 'خریداری', phase: 3 },
-  { key: 'items', perm: 'view_items', icon: 'package', en: 'Items & Stock', ur: 'اشیاء و اسٹاک', phase: 2 },
-  { key: 'low-stock', perm: 'low_stock', icon: 'alert', en: 'Low Stock', ur: 'کم اسٹاک', phase: 3 },
-  { key: 'customers', perm: 'manage_customers', icon: 'user', en: 'Customers (Udhaar)', ur: 'گاہک (ادھار)', phase: 5 },
-  { key: 'returns', perm: 'sale_returns', icon: 'rotate', en: 'Returns', ur: 'واپسی', phase: 5 },
-  { key: 'suppliers', perm: 'manage_suppliers', icon: 'truck', en: 'Suppliers', ur: 'سپلائرز', phase: 3 },
-  { key: 'expenses', perm: 'expenses', icon: 'receipt', en: 'Expenses', ur: 'اخراجات', phase: 6 },
-  { key: 'cash-out', perm: 'cash_out', icon: 'cash', en: 'Cash Out', ur: 'کیش آؤٹ', phase: 6 },
-  { key: 'investment', perm: 'investment', icon: 'trend', en: 'Investment', ur: 'سرمایہ کاری', phase: 6 },
-  { key: 'closing', perm: 'daily_closing', icon: 'clipboard', en: 'Daily Closing', ur: 'روزانہ حساب', phase: 6 },
-  { key: 'profit-loss', perm: 'view_profit_loss', icon: 'chart', en: 'Profit & Loss', ur: 'نفع و نقصان', phase: 7 },
-  { key: 'reports', perm: 'view_reports', icon: 'chart', en: 'Reports', ur: 'رپورٹس', phase: 7 },
-  { key: 'users', perm: 'manage_users', icon: 'users', en: 'Users', ur: 'صارفین', ready: true, path: '/users' },
-  { key: 'roles', perm: 'manage_roles', icon: 'shield', en: 'Roles & Permissions', ur: 'عہدے اور اختیارات', ready: true, path: '/roles' },
-  { key: 'backup', perm: 'backup_restore', icon: 'lock', en: 'Backup & Restore', ur: 'بیک اپ اور بحالی', phase: 8 },
-  { key: 'settings', perm: null, icon: 'sliders', en: 'Settings', ur: 'ترتیبات', ready: true, path: '/settings' },
+  // Sell: design preview with sample data until Phase 4 builds the real one
+  { key: 'sell', perm: 'sell', icon: 'cart', en: 'Sell', ur: 'فروخت', phase: 4, big: true, preview: true, path: '/sell' },
+
+  { key: 'items', group: 'stock', perm: 'view_items', icon: 'package', en: 'Items & Stock', ur: 'اشیاء و اسٹاک', phase: 2 },
+  { key: 'buy', group: 'stock', perm: 'buy', icon: 'truck', en: 'Buy', ur: 'خریداری', phase: 3 },
+  { key: 'low-stock', group: 'stock', perm: 'low_stock', icon: 'alert', en: 'Low Stock', ur: 'کم اسٹاک', phase: 3 },
+  { key: 'returns', group: 'stock', perm: 'sale_returns', icon: 'rotate', en: 'Returns', ur: 'واپسی', phase: 5 },
+
+  { key: 'customers', group: 'people', perm: 'manage_customers', icon: 'user', en: 'Customers (Udhaar)', ur: 'گاہک (ادھار)', phase: 5 },
+  { key: 'suppliers', group: 'people', perm: 'manage_suppliers', icon: 'truck', en: 'Suppliers', ur: 'سپلائرز', phase: 3 },
+
+  { key: 'closing', group: 'money', perm: 'daily_closing', icon: 'clipboard', en: 'Daily Closing', ur: 'روزانہ حساب', phase: 6 },
+  { key: 'cash-out', group: 'money', perm: 'cash_out', icon: 'cash', en: 'Cash Out', ur: 'کیش آؤٹ', phase: 6 },
+  { key: 'expenses', group: 'money', perm: 'expenses', icon: 'receipt', en: 'Expenses', ur: 'اخراجات', phase: 6 },
+  { key: 'investment', group: 'money', perm: 'investment', icon: 'trend', en: 'Investment', ur: 'سرمایہ کاری', phase: 6 },
+
+  { key: 'profit-loss', group: 'reports', perm: 'view_profit_loss', icon: 'chart', en: 'Profit & Loss', ur: 'نفع و نقصان', phase: 7 },
+  { key: 'reports', group: 'reports', perm: 'view_reports', icon: 'chart', en: 'Reports', ur: 'رپورٹس', phase: 7 },
+
+  { key: 'users', group: 'admin', perm: 'manage_users', icon: 'users', en: 'Users', ur: 'صارفین', ready: true, path: '/users' },
+  { key: 'roles', group: 'admin', perm: 'manage_roles', icon: 'shield', en: 'Roles & Permissions', ur: 'عہدے اور اختیارات', ready: true, path: '/roles' },
+  { key: 'backup', group: 'admin', perm: 'backup_restore', icon: 'lock', en: 'Backup & Restore', ur: 'بیک اپ اور بحالی', phase: 8 },
+  { key: 'settings', group: 'admin', perm: null, icon: 'sliders', en: 'Settings', ur: 'ترتیبات', ready: true, path: '/settings' },
 ]

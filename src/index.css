@@ -1,25 +1,36 @@
 @import "tailwindcss";
 
+/*
+  Book Mart design tokens — taken from the shop logo.
+  Style: flat, light theme only, large touch targets (48px), high contrast.
+  Rule: lime is a FILL colour only (charcoal text on it). White text never sits on lime.
+*/
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
   --font-urdu: "Noto Nastaliq Urdu", "Inter", serif;
 
-  /* Book Mart palette: deep ledger green, warm paper, amber accent */
-  --color-ink: #1d2a28;
-  --color-paper: #f7f3ea;
+  /* brand */
+  --color-charcoal: #373435;        /* logo dark — primary buttons, headings */
+  --color-charcoal-700: #262425;    /* pressed */
+  --color-charcoal-500: #4a4949;    /* logo grey */
+  --color-lime: #9fcc47;            /* logo green — highlight fills */
+  --color-lime-600: #8ab83a;        /* pressed lime */
+  --color-lime-100: #e4f1c8;
+  --color-lime-50: #f3f9e7;
+  --color-leaf: #4d7a12;            /* green for text/icons on white (5.1:1) */
+
+  /* surfaces & text */
+  --color-paper: #f5f6f1;           /* app background */
   --color-card: #ffffff;
-  --color-line: #e4ddcd;
-  --color-muted: #6b7570;
-  --color-brand-50: #e8f3f1;
-  --color-brand-100: #cfe6e2;
-  --color-brand-500: #16766c;
-  --color-brand-600: #0f5e57;
-  --color-brand-700: #0b4a44;
-  --color-amber: #f2a93b;
-  --color-amber-50: #fdf3e2;
-  --color-danger: #c2412d;
-  --color-danger-50: #fbe9e5;
-  --color-ok: #2f8a4c;
+  --color-line: #e2e5db;
+  --color-ink: #262425;
+  --color-muted: #656b62;           /* 5.0:1 on paper */
+
+  /* status */
+  --color-danger: #c0392b;
+  --color-danger-50: #fbeae7;
+  --color-warn: #e8a317;            /* charcoal text on it */
+  --color-warn-50: #fdf4e1;
 }
 
 html, body, #root { min-height: 100%; }
@@ -29,24 +40,50 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Urdu mode: Nastaliq needs extra line height */
+/* Urdu: Nastaliq needs more line height */
 html[lang="ur"] body { font-family: var(--font-urdu); line-height: 2.1; }
 html[lang="ur"] input, html[lang="ur"] select, html[lang="ur"] button, html[lang="ur"] textarea { font-family: var(--font-urdu); }
-/* Keep numbers, emails and usernames readable in Latin font even in Urdu mode */
+/* Numbers, prices, usernames stay in Latin font even in Urdu mode */
 .latin { font-family: var(--font-sans) !important; line-height: 1.5; }
 
-input, select, textarea { font-size: 16px; } /* stops phone zoom on focus */
+/* Visible keyboard focus everywhere */
+:focus-visible { outline: 3px solid var(--color-leaf); outline-offset: 2px; border-radius: 8px; }
+
+input, select, textarea { font-size: 16px; } /* prevents zoom on phone focus */
 
 .field {
   width: 100%;
+  min-height: 48px;
   border: 1.5px solid var(--color-line);
   background: #fff;
   border-radius: 12px;
-  padding: 0.7rem 0.9rem;
+  padding: 0.6rem 0.9rem;
   outline: none;
-  transition: border-color .15s;
+  transition: border-color .15s ease;
 }
-.field:focus { border-color: var(--color-brand-500); }
+.field:focus { border-color: var(--color-charcoal); box-shadow: 0 0 0 3px var(--color-lime-100); }
+.field:disabled { background: var(--color-paper); color: var(--color-muted); }
+
+/* Safe areas for phones with notches / gesture bars */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Scan line for the barcode viewfinder */
+@keyframes scanline { 0% { top: 12%; } 50% { top: 84%; } 100% { top: 12%; } }
+.scanline { animation: scanline 2.4s ease-in-out infinite; }
+
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.pop { animation: pop .25s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* hide scrollbars on horizontal chip rows */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

@@ -4,7 +4,7 @@ import { collection, doc, onSnapshot, serverTimestamp, setDoc, updateDoc } from 
 import { db, getSecondaryAuth, usernameToEmail } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
-import { Button, Card, Field, Notice, Page, Sheet, Toggle } from '../components/ui'
+import { Badge, Button, Card, EmptyState, Field, Notice, Page, Sheet, Toggle } from '../components/ui'
 import Icon from '../components/Icon'
 
 export function useRoles() {
@@ -119,14 +119,14 @@ function UserForm({ initial, roles, onDone }) {
         <input className="field latin" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
       </Field>
       {!isNew && (
-        <div className="flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3">
-          <span className="font-semibold">{active ? t('active') : t('inactive')}</span>
-          <Toggle checked={active} onChange={setActive} />
+        <div className="flex items-center justify-between rounded-xl border border-line bg-white ps-4 pe-1">
+          <span className={`font-semibold ${active ? 'text-leaf' : 'text-danger'}`}>{active ? t('active') : t('inactive')}</span>
+          <Toggle checked={active} onChange={setActive} label={t('active')} />
         </div>
       )}
       {!isNew && <p className="text-xs text-muted">{t('forgotPasswordNote')}</p>}
       <Notice>{error}</Notice>
-      <Button type="submit" className="w-full py-3" disabled={busy}>
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
         {busy ? t('saving') : t('save')}
       </Button>
     </form>
@@ -160,53 +160,69 @@ export default function Users() {
     <Page
       title={t('users')}
       right={
-        <button
-          onClick={() => setEditing('new')}
-          className="flex items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold hover:bg-white/25"
-        >
+        <Button size="sm" onClick={() => setEditing('new')} className="me-1">
           <Icon name="plus" size={18} /> {t('addUser')}
-        </button>
+        </Button>
       }
     >
       <div className="space-y-2.5">
         {admins.map((u) => (
-          <Card key={u.id} className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-brand-50 p-2.5 text-brand-600">
+          <Card key={u.id} className="flex min-h-[72px] items-center gap-3 px-4 py-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-charcoal text-white">
               <Icon name="shield" size={20} />
             </div>
-            <div className="flex-1">
-              <div className="font-semibold">{u.name}</div>
-              <div className="text-xs text-muted">{t('lockedAdmin')}</div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold">{u.name}</div>
+              <div className="text-sm text-muted">{t('lockedAdmin')}</div>
             </div>
             <Icon name="lock" size={18} className="text-muted" />
           </Card>
         ))}
 
-        {users && staff.length === 0 && <p className="py-8 text-center text-muted">{t('noUsers')}</p>}
+        {users && staff.length === 0 && (
+          <EmptyState
+            icon="users"
+            body={t('noUsers')}
+            action={
+              <Button onClick={() => setEditing('new')}>
+                <Icon name="plus" size={18} /> {t('addUser')}
+              </Button>
+            }
+          />
+        )}
 
         {staff.map((u) => {
           const self = u.id === me.uid
+          const off = u.active === false
+          const Row = self ? 'div' : 'button'
           return (
-            <Card key={u.id} className={`flex items-center gap-3 p-4 ${u.active === false ? 'opacity-60' : ''}`}>
-              <div className="rounded-full bg-paper p-2.5 text-muted">
-                <Icon name="user" size={20} />
+            <Row
+              key={u.id}
+              {...(self ? {} : { type: 'button', onClick: () => setEditing(u) })}
+              className={`flex min-h-[72px] w-full items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-start transition-colors duration-150 ${
+                self ? '' : 'cursor-pointer hover:border-charcoal-500 active:bg-paper'
+              }`}
+            >
+              <div
+                className={`latin flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold ${
+                  off ? 'bg-paper text-muted' : 'bg-lime-100 text-charcoal'
+                }`}
+                aria-hidden="true"
+              >
+                {(u.username || u.name || '?').charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold">
-                  {u.name} {self && <span className="text-xs text-muted">({t('you')})</span>}
+                <div className={`truncate font-semibold ${off ? 'text-muted' : ''}`}>
+                  {u.name} {self && <span className="text-sm font-normal text-muted">({t('you')})</span>}
                 </div>
-                <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
-                  <span className="latin" dir="ltr">@{u.username}</span>
-                  <span className="rounded-full bg-brand-50 px-2 py-0.5 font-semibold text-brand-700">{roleName(u.roleId)}</span>
-                  {u.active === false && <span className="rounded-full bg-danger-50 px-2 py-0.5 font-semibold text-danger">{t('inactive')}</span>}
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <span className="latin text-sm text-muted" dir="ltr">@{u.username}</span>
+                  <Badge tone="lime">{roleName(u.roleId)}</Badge>
+                  {off && <Badge tone="danger">{t('inactive')}</Badge>}
                 </div>
               </div>
-              {!self && (
-                <button onClick={() => setEditing(u)} className="rounded-full p-2 text-brand-600 hover:bg-brand-50" aria-label={t('edit')}>
-                  <Icon name="pencil" size={18} />
-                </button>
-              )}
-            </Card>
+              {!self && <Icon name="chevron" size={20} className="shrink-0 text-muted rtl:rotate-180" />}
+            </Row>
           )
         })}
       </div>

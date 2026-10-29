@@ -12,10 +12,10 @@ function Section({ icon, title, children }) {
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-center gap-2.5">
-        <div className="rounded-xl bg-brand-50 p-2 text-brand-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-100 text-charcoal">
           <Icon name={icon} size={20} />
         </div>
-        <h2 className="font-bold">{title}</h2>
+        <h2 className="text-lg font-bold text-charcoal">{title}</h2>
       </div>
       {children}
     </Card>
@@ -137,14 +137,17 @@ export default function Settings() {
               {emailToUsername(user?.email)}
             </div>
           </div>
-          <Button variant="secondary" onClick={logout}>
+          <Button variant="danger" onClick={logout}>
             <Icon name="logout" size={18} className="rtl:rotate-180" /> {t('signOut')}
           </Button>
         </Card>
 
-        <p className="text-center text-xs text-muted">
-          {t('appName')} · {t('version')} <span className="latin">0.1.0</span>
-        </p>
+        <div className="flex flex-col items-center gap-2 pt-4 text-sm text-muted">
+          <img src="./logo-mark.png" alt="" className="h-10 w-10 object-contain opacity-80" />
+          <span>
+            {t('appName')} · {t('version')} <span className="latin">0.2.0</span>
+          </span>
+        </div>
       </div>
     </Page>
   )

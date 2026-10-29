@@ -1,8 +1,9 @@
-// SELL SCREEN — DESIGN PREVIEW
-// Clickable mockup with sample items so the client can approve the flow and look.
-// Nothing is saved. Phase 4 connects this same UI to the real catalog, stock and sales.
+// SELL SCREEN
+// Signed in: real items, sales are saved (works offline), stock goes down, receipt can be printed/shared.
+// Public demo link (#/demo/sell): sample items, nothing is saved.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
 import { ALL_VARIANTS, SAMPLE_CATALOG, SAMPLE_CUSTOMERS } from '../lib/sampleCatalog'
@@ -12,6 +13,10 @@ import { Badge, Button, EmptyState, Field, IconButton, Notice, OfflineBanner, Pa
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
 import ProductSearch from '../components/ProductSearch'
+import { recordSale, saveCustomer, useCustomers, useShopSettings } from '../lib/selling'
+import { saleTotals, makeReceiptNo } from '../lib/saleMath'
+import { printReceipt, ReceiptView, shareReceipt } from '../components/Receipt'
+import { errorText } from '../lib/errors'
 
 /* ---------- small pieces ---------- */
 
@@ -54,66 +59,28 @@ function Stepper({ qty, onMinus, onPlus, labelMinus, labelPlus }) {
   )
 }
 
-/* ---------- receipt preview (how the 58mm thermal slip will look) ---------- */
-function ReceiptPreview({ lines, subtotal, discount, total, pay, paid, customer }) {
-  const { pick, t } = useLang()
-  const now = new Date()
+function NewCustomerForm({ onSaved }) {
+  const { t } = useLang()
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
   return (
-    <div className="mx-auto w-full max-w-[300px] rounded-lg border border-dashed border-[#b5bbae] bg-white p-4 font-mono text-[13px] leading-snug text-black">
-      <div className="mb-2 flex flex-col items-center text-center">
-        <img src="./logo-mark.png" alt="" className="mb-1 h-10 w-10 object-contain grayscale" />
-        <div className="text-base font-bold">BOOK MART</div>
-        <div className="text-[11px]">Okara</div>
-        <div className="latin mt-1 text-[11px]" dir="ltr">
-          {now.toLocaleDateString('en-GB')} {now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-        </div>
-      </div>
-      <div className="my-2 border-t border-dashed border-black/40" />
-      {lines.map((l) => (
-        <div key={l.key} className="mb-1">
-          <div className="truncate">
-            {pick(l.item)} {l.item.variants.length > 1 && `- ${pick(l.variant)}`}
-          </div>
-          <div className="latin flex justify-between" dir="ltr">
-            <span>
-              {l.qty} x {l.item.price}
-            </span>
-            <span>{(l.qty * l.item.price).toLocaleString('en-PK')}</span>
-          </div>
-        </div>
-      ))}
-      <div className="my-2 border-t border-dashed border-black/40" />
-      <div className="latin space-y-0.5" dir="ltr">
-        <div className="flex justify-between">
-          <span>Subtotal</span>
-          <span>{subtotal.toLocaleString('en-PK')}</span>
-        </div>
-        {discount > 0 && (
-          <div className="flex justify-between">
-            <span>Discount</span>
-            <span>-{discount.toLocaleString('en-PK')}</span>
-          </div>
-        )}
-        <div className="flex justify-between text-[15px] font-bold">
-          <span>TOTAL Rs</span>
-          <span>{total.toLocaleString('en-PK')}</span>
-        </div>
-        {pay !== 'cash' && (
-          <>
-            <div className="flex justify-between">
-              <span>Paid</span>
-              <span>{paid.toLocaleString('en-PK')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Udhaar ({customer?.name})</span>
-              <span>{(total - paid).toLocaleString('en-PK')}</span>
-            </div>
-          </>
-        )}
-      </div>
-      <div className="my-2 border-t border-dashed border-black/40" />
-      <div className="text-center text-[11px]">{t('receiptThanks')}</div>
-    </div>
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (name.trim()) onSaved(saveCustomer({ name, phone }), name.trim())
+      }}
+    >
+      <Field label={t('customerName')}>
+        <input className="field" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+      </Field>
+      <Field label={`${t('phone')} (${t('optional')})`}>
+        <input className="field latin" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      </Field>
+      <Button type="submit" size="lg" className="w-full" disabled={!name.trim()}>
+        {t('save')}
+      </Button>
+    </form>
   )
 }
 
@@ -140,6 +107,14 @@ export default function SellPreview({ demo = false }) {
   const [paidInput, setPaidInput] = useState('')
   const [error, setError] = useState('')
   const toastTimer = useRef(null)
+  const navigate = useNavigate()
+  const shop = useShopSettings()
+  const realCustomers = useCustomers(live && can('sell_credit'))
+  const customers = live ? realCustomers || [] : SAMPLE_CUSTOMERS
+  const [doneSale, setDoneSale] = useState(null)
+  const [failed, setFailed] = useState([])
+  const [newCust, setNewCust] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   // Real shop items when signed in; sample items on the public demo link.
   // Shape: [{ category, subs: [{ sub, items: [{ item, variants }] }] }]
@@ -174,7 +149,8 @@ export default function SellPreview({ demo = false }) {
   const total = subtotal - disc
   const paid = pay === 'cash' ? total : pay === 'credit' ? 0 : Math.min(Number(paidInput) || 0, total)
   const qtyOf = useMemo(() => Object.fromEntries(lines.map((l) => [l.key, l.qty])), [lines])
-  const customer = SAMPLE_CUSTOMERS.find((c) => c.id === customerId)
+  const customer = customers.find((c) => c.id === customerId)
+  const stockOf = (variantId) => (live ? catalog.variants.find((v) => v.id === variantId)?.stock ?? 0 : 99)
 
   useEffect(() => () => clearTimeout(toastTimer.current), [])
 
@@ -231,11 +207,38 @@ export default function SellPreview({ demo = false }) {
 
   function complete() {
     setError('')
+    if (busy || !lines.length) return
     if (pay !== 'cash' && !customerId) return setError(t('chooseCustomer'))
+    if (!live) {
+      // demo: build the receipt only
+      const cartLines = lines.map((l) => ({
+        itemName: l.item.en,
+        variantName: l.item.variants.length > 1 ? l.variant.en : '',
+        qty: l.qty,
+        price: l.item.price,
+        unitCost: null,
+      }))
+      setDoneSale({ receiptNo: makeReceiptNo(), lines: cartLines, ...saleTotals(cartLines, discount, pay, paidInput), customerName: customer?.name || '', clientAt: Date.now() })
+      return setSheet('done')
+    }
+    setBusy(true)
+    const sale = recordSale({
+      cartLines: lines,
+      discount: can('sell_discount') ? discount : 0,
+      payType: pay,
+      paidInput,
+      customer: pay !== 'cash' ? customer : null,
+      costs: catalog.costs,
+      user: { uid: auth.user.uid, name: auth.displayName },
+      onFail: (e, s) => setFailed((f) => [...f, { receiptNo: s.receiptNo, total: s.total, msg: errorText(e, t) }]),
+    })
+    setDoneSale(sale)
+    setBusy(false)
     setSheet('done')
   }
 
   function newSale() {
+    setDoneSale(null)
     setLines([])
     setDiscount('')
     setPay('cash')
@@ -250,18 +253,37 @@ export default function SellPreview({ demo = false }) {
         title={t('sell')}
         back={!demo}
         right={
-          <span className="me-2 flex items-center gap-2">
-            {demo && <LangSwitch />}
-            <Badge tone="lime">{t('preview')}</Badge>
-          </span>
+          demo ? (
+            <span className="me-2 flex items-center gap-2">
+              <LangSwitch />
+              <Badge tone="lime">{t('preview')}</Badge>
+            </span>
+          ) : (
+            can('view_sales') && <IconButton icon="receipt" label={t('salesHistory')} onClick={() => navigate('/sales')} className="me-1 text-charcoal" />
+          )
         }
       />
       <OfflineBanner />
 
       <main className="mx-auto max-w-3xl px-4 pt-4">
-        <div className="mb-4">
-          <Notice type="warn">{live ? t('liveNotice') : t('demoNotice')}</Notice>
-        </div>
+        {!live && (
+          <div className="mb-4">
+            <Notice type="warn">{t('demoNotice')}</Notice>
+          </div>
+        )}
+        {failed.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {failed.map((f) => (
+              <Notice key={f.receiptNo}>
+                <b>
+                  {t('saleNotSaved')} #{f.receiptNo} (Rs {Number(f.total).toLocaleString('en-PK')})
+                </b>
+                <br />
+                {f.msg}
+              </Notice>
+            ))}
+          </div>
+        )}
 
         {/* 0. Search — type full or part of a name, colour or barcode */}
         <div className="mb-4">
@@ -487,6 +509,11 @@ export default function SellPreview({ demo = false }) {
                   {l.item.variants.length > 1 && <>{pick(l.variant)} · </>}
                   <Rs value={l.item.price} />
                 </div>
+                {live && l.qty > stockOf(l.variant.id) && (
+                  <div className="text-sm font-semibold text-danger">
+                    {t('onlyInStock')} <span className="latin">{Math.max(0, stockOf(l.variant.id))}</span>
+                  </div>
+                )}
               </div>
               <Stepper
                 qty={l.qty}
@@ -539,14 +566,20 @@ export default function SellPreview({ demo = false }) {
           {pay !== 'cash' && (
             <>
               <Field label={t('customer')}>
-                <select className="field" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                  <option value="">{t('chooseCustomer')}</option>
-                  {SAMPLE_CUSTOMERS.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} — Rs {c.balance.toLocaleString('en-PK')}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select className="field" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+                    <option value="">{t('chooseCustomer')}</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                        {(c.balance || 0) > 0 ? ` — ${t('owes')} Rs ${Number(c.balance).toLocaleString('en-PK')}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {live && (
+                    <IconButton icon="plus" label={t('newCustomer')} onClick={() => setNewCust(true)} className="rounded-xl border-[1.5px] border-line bg-white" />
+                  )}
+                </div>
               </Field>
               {pay === 'partial' && (
                 <Field label={t('paidNow')}>
@@ -587,31 +620,58 @@ export default function SellPreview({ demo = false }) {
           </div>
 
           <Notice>{error}</Notice>
-          <Button variant="accent" size="lg" className="w-full" onClick={complete}>
+          <Button variant="accent" size="lg" className="w-full" onClick={complete} disabled={busy}>
             <Icon name="check" size={22} /> {t('completeSale')}
           </Button>
         </div>
       </Sheet>
 
       {/* 7. Done + receipt */}
-      <Sheet open={sheet === 'done'} title={t('saleComplete')} onClose={newSale}>
-        <div className="mb-4 flex flex-col items-center text-center">
-          <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-lime text-charcoal">
-            <Icon name="check" size={34} strokeWidth={3} />
-          </div>
-          <Rs value={total} className="text-3xl font-bold text-charcoal" />
-          <span className="text-muted">{pay === 'cash' ? t('cash') : pay === 'credit' ? t('credit') : t('partial')}</span>
-        </div>
-        <p className="mb-2 text-center text-sm font-semibold text-muted">{t('receiptPreview')}</p>
-        <ReceiptPreview lines={lines} subtotal={subtotal} discount={disc} total={total} pay={pay} paid={paid} customer={customer} />
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <Button variant="secondary" size="lg" onClick={() => showToast(t('printerLater'))}>
-            <Icon name="printer" size={20} /> {t('print')}
-          </Button>
-          <Button size="lg" onClick={newSale}>
-            <Icon name="plus" size={20} /> {t('newSale')}
-          </Button>
-        </div>
+      <Sheet open={sheet === 'done' && !!doneSale} title={t('saleComplete')} onClose={newSale}>
+        {doneSale && (
+          <>
+            <div className="mb-4 flex flex-col items-center text-center">
+              <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-lime text-charcoal">
+                <Icon name="check" size={34} strokeWidth={3} />
+              </div>
+              <Rs value={doneSale.total} className="text-3xl font-bold text-charcoal" />
+              <span className="text-muted">
+                {doneSale.due > 0 ? `${t('credit')} · ${doneSale.customerName}` : t('cash')}
+              </span>
+              {live && !navigator.onLine && <span className="mt-1 text-sm font-semibold text-leaf">{t('savedOffline')}</span>}
+            </div>
+            <ReceiptView sale={doneSale} shop={shop} />
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <Button variant="secondary" size="lg" onClick={() => printReceipt(doneSale, shop, t('receiptThanks'))}>
+                <Icon name="printer" size={20} /> {t('print')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={async () => {
+                  const r = await shareReceipt(doneSale, shop)
+                  if (r === 'copied') showToast(t('copied'))
+                }}
+              >
+                <Icon name="share" size={20} /> {t('share')}
+              </Button>
+            </div>
+            <Button size="lg" className="mt-3 w-full" onClick={newSale}>
+              <Icon name="plus" size={20} /> {t('newSale')}
+            </Button>
+          </>
+        )}
+      </Sheet>
+
+      <Sheet open={newCust} title={t('newCustomer')} onClose={() => setNewCust(false)}>
+        {newCust && (
+          <NewCustomerForm
+            onSaved={(id) => {
+              setCustomerId(id)
+              setNewCust(false)
+            }}
+          />
+        )}
       </Sheet>
     </div>
   )

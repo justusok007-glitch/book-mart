@@ -125,6 +125,15 @@ export default function Settings() {
           </Section>
         )}
 
+        <Section icon="printer" title={t('receiptPrinter')}>
+          <ol className="list-decimal space-y-1.5 ps-5 text-sm text-muted">
+            <li>{t('printerStep1')}</li>
+            <li>{t('printerStep2')}</li>
+            <li>{t('printerStep3')}</li>
+          </ol>
+          <p className="mt-3 text-sm text-muted">{t('printerApkNote')}</p>
+        </Section>
+
         <Section icon="lock" title={t('changePassword')}>
           <ChangePassword />
         </Section>

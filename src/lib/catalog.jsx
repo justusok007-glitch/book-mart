@@ -37,7 +37,8 @@ const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || (a.en || '').locale
 export function CatalogProvider({ children }) {
   const { user, loading, blocked, can } = useAuth()
   const enabled = !!user && !loading && !blocked
-  const canCost = enabled && can('view_cost_price')
+  // sellers and buyers load costs too (to store cost with each sale / purchase); screens show costs only with view_cost_price
+  const canCost = enabled && (can('view_cost_price') || can('buy') || can('sell'))
   const [cats, setCats] = useState(null)
   const [items, setItems] = useState(null)
   const [variants, setVariants] = useState(null)

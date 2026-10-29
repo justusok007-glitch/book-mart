@@ -106,8 +106,9 @@ export const FEATURE_GROUPS = [
 
 export const FEATURES = [
   // Sell: design preview with sample data until Phase 4 builds the real one
-  { key: 'sell', perm: 'sell', icon: 'cart', en: 'Sell', ur: 'فروخت', phase: 4, big: true, preview: true, path: '/sell' },
+  { key: 'sell', perm: 'sell', icon: 'cart', en: 'Sell', ur: 'فروخت', big: true, ready: true, path: '/sell' },
 
+  { key: 'sales', group: 'stock', perm: 'view_sales', icon: 'receipt', en: 'Sales', ur: 'فروخت کا ریکارڈ', ready: true, path: '/sales' },
   { key: 'items', group: 'stock', perm: 'view_items', icon: 'package', en: 'Items & Stock', ur: 'اشیاء و اسٹاک', ready: true, path: '/items' },
   { key: 'categories', group: 'stock', perm: 'manage_items', icon: 'grid', en: 'Categories', ur: 'کیٹیگریز', ready: true, path: '/categories' },
   { key: 'buy', group: 'stock', perm: 'buy', icon: 'truck', en: 'Buy', ur: 'خریداری', ready: true, path: '/buy' },

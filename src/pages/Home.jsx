@@ -3,6 +3,9 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
 import { FEATURE_GROUPS, FEATURES } from '../lib/permissions'
 import { useCatalog } from '../lib/catalog'
+import { useDayStats } from '../lib/selling'
+import { dayKey } from '../lib/saleMath'
+import { useAuth as useAuthCtx } from '../context/AuthContext'
 import { Badge, IconButton, OfflineBanner, SectionTitle } from '../components/ui'
 import Icon from '../components/Icon'
 
@@ -54,9 +57,12 @@ function Tile({ f }) {
 function TodayStrip() {
   const { t } = useLang()
   const { ready, lowList } = useCatalog()
+  const { can } = useAuthCtx()
+  const today = useDayStats(dayKey(), can('daily_closing') || can('view_profit_loss') || can('view_sales'))
+  const money = (n) => (today ? 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 }) : null)
   const stats = [
-    { label: t('todaySales'), icon: 'cart' },
-    { label: t('cashInHand'), icon: 'cash' },
+    { label: t('todaySales'), icon: 'cart', value: money(today?.salesTotal), to: can('view_sales') ? '/sales' : null },
+    { label: t('cashReceivedToday'), icon: 'cash', value: money(today?.cashIn) },
     { label: t('lowStock'), icon: 'alert', value: ready ? lowList.length : null, to: '/low-stock', danger: ready && lowList.length > 0 },
   ]
   return (
@@ -83,7 +89,7 @@ function TodayStrip() {
           )
         })}
       </div>
-      <p className="mt-2 text-xs text-muted">{t('statsLater')}</p>
+      
     </div>
   )
 }

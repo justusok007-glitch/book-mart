@@ -79,7 +79,7 @@ service cloud.firestore {
       allow create, delete: if can('manage_items');
       // buying and adjusting may only change the stock number
       allow update: if can('manage_items')
-        || ((can('buy') || can('stock_adjust'))
+        || ((can('buy') || can('stock_adjust') || can('sell') || can('sale_returns'))
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']));
     }
     // one doc per barcode keeps barcodes unique
@@ -88,8 +88,10 @@ service cloud.firestore {
       allow create, delete: if can('manage_items');
     }
     // cost prices are hidden from roles without "See cost price"
+    // sellers need to read the average cost so each sale stores its cost for profit reports
+    // (the app only SHOWS costs to roles with "See cost price")
     match /itemCosts/{id} {
-      allow read: if can('view_cost_price') || can('buy');
+      allow read: if can('view_cost_price') || can('buy') || can('sell');
       allow write: if (can('manage_items') && can('view_cost_price')) || can('buy');
     }
     // stock history: Phase 2 writes opening stock only
@@ -99,6 +101,8 @@ service cloud.firestore {
            (request.resource.data.type == 'opening'  && can('manage_items'))
         || (request.resource.data.type == 'purchase' && can('buy'))
         || (request.resource.data.type == 'adjust'   && can('stock_adjust'))
+        || (request.resource.data.type == 'sale'     && can('sell'))
+        || (request.resource.data.type == 'return'   && can('sale_returns'))
       );
     }
     match /counters/barcode {
@@ -126,6 +130,41 @@ service cloud.firestore {
     match /purchases/{id} {
       allow read: if can('buy') || can('manage_suppliers') || can('view_reports');
       allow create: if can('buy') && request.resource.data.by == request.auth.uid;
+    }
+
+    // ---------- selling (Phase 4) ----------
+    match /sales/{id} {
+      allow read: if can('view_sales') || can('view_reports') || can('daily_closing') || can('sale_returns')
+                  || (signedIn() && resource.data.by == request.auth.uid);
+      allow create: if can('sell')
+        && request.resource.data.by == request.auth.uid
+        && (request.resource.data.discount == 0 || can('sell_discount'))
+        && (request.resource.data.due == 0 || can('sell_credit'));
+    }
+    // running daily totals (each sale adds to them)
+    match /dailyStats/{day} {
+      allow read: if can('daily_closing') || can('view_reports') || can('view_profit_loss') || can('view_sales');
+      allow create, update: if can('sell') || can('sale_returns') || can('expenses') || can('cash_out')
+                            || can('receive_payments') || can('investment');
+    }
+
+    // ---------- customers & udhaar ----------
+    function customerAccess() { return can('sell_credit') || can('manage_customers') || can('receive_payments'); }
+
+    match /customers/{id} {
+      allow read: if customerAccess();
+      allow create: if can('sell_credit') || can('manage_customers');
+      allow update: if can('manage_customers')
+        || ((can('sell_credit') || can('receive_payments') || can('sale_returns'))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'updatedAt']));
+    }
+    match /customerLedger/{id} {
+      allow read: if customerAccess();
+      allow create: if request.resource.data.by == request.auth.uid && (
+           (request.resource.data.type == 'sale'    && can('sell_credit'))
+        || (request.resource.data.type == 'payment' && can('receive_payments'))
+        || (request.resource.data.type == 'return'  && can('sale_returns'))
+      );
     }
 
     // Everything else is closed until its phase adds rules.

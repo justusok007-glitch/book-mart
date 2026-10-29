@@ -18,7 +18,7 @@ Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, fl
 1. ✅ Setup, login, roles & permissions, users, settings, English/Urdu
 2. ✅ Catalog — categories, sub-categories, items, same-price colours/types, barcodes (type/scan/generate), opening stock, low stock
 3. ✅ Buy & stock — suppliers, purchases, weighted average cost, last cost price, stock adjustments, supplier payables & payments
-4. Sell screen — scan / select (category tabs → sub-category → item → same-price items), cart, discount, cash/credit, receipt printing
+4. ✅ Sell — saves offline, stock down, cost at sale for profit, discount, cash/part/udhaar with customers, receipt print & share, sales history
 5. Customers (udhaar ledger) and returns
 6. Expenses, cash-out, investment, daily closing
 7. Reports — profit & loss, cash-out summary, sales by day/salesman

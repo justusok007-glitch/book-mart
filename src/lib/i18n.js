@@ -316,4 +316,5 @@ export const STRINGS = {
   stockAfter: { en: 'Stock after', ur: 'بعد میں اسٹاک' },
   adjustNote: { en: 'For damage, loss or counting mistakes. To add bought stock use Buy, so the cost is recorded.', ur: 'خرابی، گمشدگی یا گنتی کی غلطی کے لیے۔ خریدا ہوا مال "خریداری" سے شامل کریں تاکہ قیمت درج ہو۔' },
   saveAdjustment: { en: 'Save', ur: 'محفوظ کریں' },
+  skippedNoQty: { en: 'No quantity — will be skipped', ur: 'تعداد نہیں — چھوڑ دیا جائے گا' },
 }

@@ -17,7 +17,7 @@ Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, fl
 ## Build phases
 1. ✅ Setup, login, roles & permissions, users, settings, English/Urdu
 2. ✅ Catalog — categories, sub-categories, items, same-price colours/types, barcodes (type/scan/generate), opening stock, low stock
-3. Buy & stock — suppliers, purchases, average cost, last cost price, low stock, supplier payables
+3. ✅ Buy & stock — suppliers, purchases, weighted average cost, last cost price, stock adjustments, supplier payables & payments
 4. Sell screen — scan / select (category tabs → sub-category → item → same-price items), cart, discount, cash/credit, receipt printing
 5. Customers (udhaar ledger) and returns
 6. Expenses, cash-out, investment, daily closing

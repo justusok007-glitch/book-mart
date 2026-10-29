@@ -124,21 +124,22 @@ export default function Buy() {
   async function save() {
     setError('')
     const errs = {}
-    for (const l of lines) {
-      if (!(Number(l.qty) >= 1)) errs[l.key] = t('enterQty')
-      else if (l.unitCost === '' || Number(l.unitCost) < 0) errs[l.key] = t('enterCost')
+    // colours left with no quantity are simply skipped
+    const buying = lines.filter((l) => Number(l.qty) >= 1)
+    for (const l of buying) {
+      if (l.unitCost === '' || Number(l.unitCost) < 0) errs[l.key] = t('enterCost')
     }
     setLineErrors(errs)
-    if (!lines.length) return setError(t('addItemsToBuy'))
+    if (!buying.length) return setError(t('addItemsToBuy'))
     if (Object.keys(errs).length) return setError(t('fixMarked'))
     if (payType !== 'cash' && !supplier) return setError(t('chooseSupplierForCredit'))
     if (!navigator.onLine) return setError(t('buyNeedsInternet'))
 
     const variantIdsByItem = {}
-    for (const l of lines) variantIdsByItem[l.itemId] = catalog.variantsOf(l.itemId, true).map((v) => v.id)
+    for (const l of buying) variantIdsByItem[l.itemId] = catalog.variantsOf(l.itemId, true).map((v) => v.id)
     const priceUpdates = {}
     if (canPrice)
-      for (const [itemId, p] of Object.entries(prices))
+      for (const [itemId, p] of Object.entries(prices).filter(([id]) => buying.some((l) => l.itemId === id)))
         if (p !== '' && Number(p) > 0 && Number(p) !== catalog.itemById[itemId]?.price) priceUpdates[itemId] = Number(p)
 
     setBusy(true)
@@ -152,7 +153,7 @@ export default function Buy() {
         priceUpdates,
         variantIdsByItem,
         user: { uid: user.uid, name: displayName },
-        lines: lines.map((l) => ({
+        lines: buying.map((l) => ({
           itemId: l.itemId,
           variantId: l.variantId,
           itemName: l.item.en,
@@ -283,7 +284,9 @@ export default function Buy() {
                     </div>
                   )}
                   <div className="mt-3 flex items-center justify-between border-t border-line pt-2">
-                    <span className={`text-sm ${loss ? 'font-semibold text-danger' : 'text-muted'}`}>{loss ? t('costAbovePrice') : lineErrors[l.key] || ''}</span>
+                    <span className={`text-sm ${loss || lineErrors[l.key] ? 'font-semibold text-danger' : 'text-muted'}`}>
+                      {lineErrors[l.key] || (loss ? t('costAbovePrice') : !(Number(l.qty) >= 1) ? t('skippedNoQty') : '')}
+                    </span>
                     <Rs value={lineTotal} className="text-lg font-bold" />
                   </div>
                 </Card>
@@ -327,7 +330,7 @@ export default function Buy() {
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <div className="text-sm text-muted">
-                <span className="latin">{lines.length}</span> {t('linesWord')}
+                <span className="latin">{lines.filter((l) => Number(l.qty) >= 1).length}</span> {t('linesWord')}
                 {payType !== 'cash' && total - paidNum > 0 && (
                   <span className="text-danger">
                     {' · '}

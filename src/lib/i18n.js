@@ -402,4 +402,5 @@ export const STRINGS = {
   returnsShort: { en: 'Returns', ur: 'واپسی' },
   netSales: { en: 'Sales (after returns)', ur: 'فروخت (واپسی کے بعد)' },
   leftWord: { en: 'left', ur: 'باقی' },
+  noMoreStock: { en: 'No more in stock', ur: 'مزید اسٹاک نہیں' },
 }

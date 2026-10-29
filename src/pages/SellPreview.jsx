@@ -177,7 +177,15 @@ export default function SellPreview({ demo = false }) {
     toastTimer.current = setTimeout(() => setToast(''), 1600)
   }
 
+  // how many more of this colour can go in the cart (stock minus what is already in it)
+  const availableOf = (variantId) => stockOf(variantId) - (qtyOf[variantId] || 0)
+
   function add(item, variant) {
+    if (live && availableOf(variant.id) <= 0) {
+      showToast(`${t('noMoreStock')}: ${pick(item)}${item.variants.length > 1 ? ' · ' + pick(variant) : ''}`)
+      if (navigator.vibrate) navigator.vibrate([40, 60, 40])
+      return
+    }
     setLines((ls) => {
       const i = ls.findIndex((l) => l.key === variant.id)
       if (i >= 0) return ls.map((l, j) => (j === i ? { ...l, qty: l.qty + 1 } : l))
@@ -188,6 +196,7 @@ export default function SellPreview({ demo = false }) {
   }
 
   function changeQty(key, delta) {
+    if (live && delta > 0 && availableOf(key) <= 0) return showToast(t('noMoreStock'))
     setLines((ls) => ls.flatMap((l) => (l.key !== key ? [l] : l.qty + delta <= 0 ? [] : [{ ...l, qty: l.qty + delta }])))
   }
 
@@ -407,9 +416,10 @@ export default function SellPreview({ demo = false }) {
                   <button
                     key={item.id}
                     onClick={() => tapItem(item)}
+                    aria-disabled={live && left <= 0}
                     className={`relative flex min-h-[124px] cursor-pointer flex-col justify-between rounded-2xl border-[1.5px] bg-white p-4 text-start transition-colors duration-150 hover:border-charcoal-500 active:bg-paper ${
                       inCart ? 'border-lime' : 'border-line'
-                    }`}
+                    } ${live && left <= 0 ? 'opacity-60' : ''}`}
                   >
                     {inCart > 0 && (
                       <span key={bump} className="pop latin absolute end-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-lime px-2 text-sm font-bold text-charcoal">
@@ -444,7 +454,11 @@ export default function SellPreview({ demo = false }) {
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-20 z-[60] flex justify-center px-4">
         {toast && (
           <div className="flex max-w-sm items-center gap-2 rounded-full bg-charcoal px-4 py-2.5 text-sm font-semibold text-white shadow-lg">
-            <Icon name="checkCircle" size={18} className="text-lime" />
+            {toast.startsWith(t('noMoreStock')) || toast.startsWith(t('barcodeNotFound')) ? (
+              <Icon name="alert" size={18} className="text-warn" />
+            ) : (
+              <Icon name="checkCircle" size={18} className="text-lime" />
+            )}
             <span className="truncate">{toast}</span>
           </div>
         )}
@@ -495,9 +509,10 @@ export default function SellPreview({ demo = false }) {
                   <button
                     key={v.id}
                     onClick={() => add(openItem, v)}
+                    aria-disabled={live && vLeft <= 0}
                     className={`relative flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl border-[1.5px] bg-white px-4 text-start font-semibold transition-colors duration-150 hover:border-charcoal-500 active:bg-paper ${
                       q ? 'border-lime' : 'border-line'
-                    }`}
+                    } ${live && vLeft <= 0 ? 'opacity-50' : ''}`}
                   >
                     <Swatch color={v.dot} />
                     <span className="flex-1">

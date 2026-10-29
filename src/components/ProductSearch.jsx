@@ -52,7 +52,7 @@ function Highlight({ text, tokens }) {
   )
 }
 
-export default function ProductSearch({ entries, qtyOf = {}, onAdd }) {
+export default function ProductSearch({ entries, qtyOf = {}, onAdd, stockOf = null }) {
   const { t, pick } = useLang()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -197,7 +197,17 @@ export default function ProductSearch({ entries, qtyOf = {}, onAdd }) {
                         {pick(e.cat)} › {pick(e.sub)}
                       </div>
                     </div>
-                    <Rs value={e.item.price} className="font-bold text-charcoal" />
+                    <span className="flex flex-col items-end">
+                      <Rs value={e.item.price} className="font-bold text-charcoal" />
+                      {stockOf && (() => {
+                        const left = stockOf(e.variant.id) - qty
+                        return (
+                          <span className={`text-xs font-semibold ${left <= 0 || left <= (e.item.lowStock ?? 0) ? 'text-danger' : 'text-muted'}`}>
+                            {left <= 0 ? t('outOfStock') : <><span className="latin">{left}</span> {t('leftWord')}</>}
+                          </span>
+                        )
+                      })()}
+                    </span>
                     {qty > 0 ? (
                       <span key={qty} className="pop latin flex h-8 min-w-8 items-center justify-center rounded-full bg-lime px-2 text-sm font-bold text-charcoal">
                         {qty}

@@ -59,6 +59,23 @@ function Stepper({ qty, onMinus, onPlus, labelMinus, labelPlus }) {
   )
 }
 
+// "47 left" — stock minus what is already in the cart; red when at/below the low-stock alert
+function LeftTag({ left, low }) {
+  const { t } = useLang()
+  const cls = left <= 0 ? 'bg-danger-50 text-danger' : low ? 'bg-warn-50 text-danger' : 'bg-paper text-muted'
+  return (
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
+      {left <= 0 ? (
+        t('outOfStock')
+      ) : (
+        <>
+          <span className="latin">{left}</span>&nbsp;{t('leftWord')}
+        </>
+      )}
+    </span>
+  )
+}
+
 function NewCustomerForm({ onSaved }) {
   const { t } = useLang()
   const [name, setName] = useState('')
@@ -287,7 +304,7 @@ export default function SellPreview({ demo = false }) {
 
         {/* 0. Search — type full or part of a name, colour or barcode */}
         <div className="mb-4">
-          <ProductSearch entries={entries} qtyOf={qtyOf} onAdd={add} />
+          <ProductSearch entries={entries} qtyOf={qtyOf} onAdd={add} stockOf={live ? stockOf : null} />
         </div>
 
         {/* 1. Scan / Select */}
@@ -384,6 +401,8 @@ export default function SellPreview({ demo = false }) {
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {sub.items.map((item) => {
                 const inCart = item.variants.reduce((n, v) => n + (qtyOf[v.id] || 0), 0)
+                const left = item.variants.reduce((n, v) => n + Math.max(0, stockOf(v.id)), 0) - inCart
+                const low = item.variants.some((v) => stockOf(v.id) - (qtyOf[v.id] || 0) <= (item.lowStock ?? 0))
                 return (
                   <button
                     key={item.id}
@@ -402,14 +421,15 @@ export default function SellPreview({ demo = false }) {
                       <span className="block">
                         <Rs value={item.price} className="text-xl font-bold text-charcoal" />
                       </span>
-                      <span className="text-sm text-muted">
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
                         {item.variants.length > 1 ? (
-                          <>
+                          <span>
                             <span className="latin">{item.variants.length}</span> {t('options')}
-                          </>
+                          </span>
                         ) : (
-                          t('tapToAdd')
+                          !live && <span>{t('tapToAdd')}</span>
                         )}
+                        {live && <LeftTag left={left} low={low} />}
                       </span>
                     </span>
                   </button>
@@ -470,6 +490,7 @@ export default function SellPreview({ demo = false }) {
             <div className="grid grid-cols-2 gap-3">
               {openItem.variants.map((v) => {
                 const q = qtyOf[v.id] || 0
+                const vLeft = stockOf(v.id) - q
                 return (
                   <button
                     key={v.id}
@@ -479,7 +500,10 @@ export default function SellPreview({ demo = false }) {
                     }`}
                   >
                     <Swatch color={v.dot} />
-                    <span className="flex-1">{pick(v)}</span>
+                    <span className="flex-1">
+                      <span className="block leading-snug">{pick(v)}</span>
+                      {live && <LeftTag left={vLeft} low={vLeft <= (openItem.lowStock ?? 0)} />}
+                    </span>
                     {q > 0 && (
                       <span key={`${v.id}-${q}`} className="pop latin flex h-7 min-w-7 items-center justify-center rounded-full bg-lime px-2 text-sm font-bold text-charcoal">
                         {q}

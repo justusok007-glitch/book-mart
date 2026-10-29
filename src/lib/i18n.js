@@ -401,4 +401,5 @@ export const STRINGS = {
   returnedBadge: { en: 'Returned', ur: 'واپسی' },
   returnsShort: { en: 'Returns', ur: 'واپسی' },
   netSales: { en: 'Sales (after returns)', ur: 'فروخت (واپسی کے بعد)' },
+  leftWord: { en: 'left', ur: 'باقی' },
 }

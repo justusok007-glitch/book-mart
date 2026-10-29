@@ -399,4 +399,6 @@ export const STRINGS = {
   returnNotSaved: { en: 'Return was NOT saved.', ur: 'واپسی محفوظ نہیں ہوئی۔' },
   itemsReturnedFromSale: { en: 'Items returned from this sale:', ur: 'اس فروخت سے واپس آنے والا مال:' },
   returnedBadge: { en: 'Returned', ur: 'واپسی' },
+  returnsShort: { en: 'Returns', ur: 'واپسی' },
+  netSales: { en: 'Sales (after returns)', ur: 'فروخت (واپسی کے بعد)' },
 }

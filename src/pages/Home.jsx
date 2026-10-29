@@ -61,7 +61,14 @@ function TodayStrip() {
   const today = useDayStats(dayKey(), can('daily_closing') || can('view_profit_loss') || can('view_sales'))
   const money = (n) => (today ? 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 }) : null)
   const stats = [
-    { label: t('todaySales'), icon: 'cart', value: money(today?.salesTotal), to: can('view_sales') ? '/sales' : null },
+    {
+      label: t('todaySales'),
+      icon: 'cart',
+      // net of returns: what was sold minus what came back today
+      value: money((today?.salesTotal || 0) - (today?.returnsTotal || 0)),
+      sub: today?.returnsTotal > 0 ? `${t('returnsShort')} Rs ${Number(today.returnsTotal).toLocaleString('en-PK')}` : null,
+      to: can('view_sales') ? '/sales' : null,
+    },
     { label: t('cashReceivedToday'), icon: 'cash', value: money(today?.cashIn) },
     { label: t('lowStock'), icon: 'alert', value: ready ? lowList.length : null, to: '/low-stock', danger: ready && lowList.length > 0 },
   ]
@@ -76,6 +83,7 @@ function TodayStrip() {
                 <span>{s.label}</span>
               </div>
               <div className={`latin mt-1 text-xl font-bold ${s.danger ? 'text-danger' : 'text-ink'}`}>{s.value ?? '—'}</div>
+              {s.sub && <div className="text-xs text-muted">{s.sub}</div>}
             </>
           )
           return s.to ? (

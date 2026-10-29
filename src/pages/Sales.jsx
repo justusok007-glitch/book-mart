@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
-import { fetchSale, fetchSalesForDay, useShopSettings } from '../lib/selling'
+import { fetchSale, fetchSalesForDay, useDayStats, useShopSettings } from '../lib/selling'
 import { dayKey } from '../lib/saleMath'
 import { toDate } from '../lib/format'
 import { Badge, Button, Card, EmptyState, Notice, Page, Rs, Sheet, Spinner } from '../components/ui'
@@ -34,6 +34,12 @@ export function SalesList() {
   }, [day])
 
   const sum = (k) => (list || []).reduce((s, x) => s + (Number(x[k]) || 0), 0)
+  // the day's running totals already include returns made that day (refunds, profit given back)
+  const stats = useDayStats(day, true)
+  const returns = stats?.returnsTotal ?? sum('returnedTotal')
+  const netSales = (stats?.salesTotal ?? sum('total')) - returns
+  const cashIn = stats?.cashIn ?? sum('paid')
+  const profit = stats?.profit ?? sum('profit')
   const shift = (n) => {
     const d = new Date(day + 'T12:00:00')
     d.setDate(d.getDate() + n)
@@ -63,15 +69,16 @@ export function SalesList() {
           <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {[
               { label: t('salesCount'), value: <span className="latin">{list.length}</span> },
-              { label: t('total'), value: <Rs value={sum('total')} /> },
-              { label: t('cashReceived'), value: <Rs value={sum('paid')} /> },
+              { label: t('netSales'), value: <Rs value={netSales} />, sub: returns > 0 ? <>{t('returnsShort')} <Rs value={returns} /></> : null },
+              { label: t('cashReceived'), value: <Rs value={cashIn} /> },
               showProfit
-                ? { label: t('profit'), value: <Rs value={sum('profit')} className="text-leaf" /> }
+                ? { label: t('profit'), value: <Rs value={profit} className="text-leaf" /> }
                 : { label: t('udhaarGiven'), value: <Rs value={sum('due')} className="text-danger" /> },
             ].map((s) => (
               <Card key={s.label} className="p-3">
                 <div className="text-xs font-semibold text-muted">{s.label}</div>
                 <div className="mt-1 text-lg font-bold">{s.value}</div>
+                {s.sub && <div className="text-xs text-muted">{s.sub}</div>}
               </Card>
             ))}
           </div>

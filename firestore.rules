@@ -1,0 +1,68 @@
+rules_version = '2';
+
+// Book Mart — Firestore security rules
+// Paste this whole file into Firebase Console → Firestore Database → Rules → Publish.
+// Each build phase adds rules for its new collections.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() { return request.auth != null; }
+
+    // Developer admin (locked). Must match ADMIN_EMAIL in src/lib/firebase.js
+    function isAdmin() {
+      return signedIn() && request.auth.token.email == 'saadmalikok@gmail.com';
+    }
+
+    function userPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function profile() { return get(userPath()).data; }
+
+    function isActive() {
+      return signedIn() && exists(userPath()) && profile().active == true;
+    }
+
+    // Does the signed-in user's role have permission p?
+    function can(p) {
+      return isAdmin() || (
+        isActive() &&
+        get(/databases/$(database)/documents/roles/$(profile().roleId)).data.permissions.get(p, false) == true
+      );
+    }
+
+    // ---------- users ----------
+    match /users/{uid} {
+      // everyone active can see staff names (for reports); a blocked user can still read their own record
+      allow read: if isAdmin() || isActive() || (signedIn() && request.auth.uid == uid);
+
+      // Admin can do anything. A "manage_users" role can add/edit staff, but never
+      // touch the admin, never make someone admin, and never edit themselves.
+      allow create, update: if isAdmin() || (
+        can('manage_users') &&
+        uid != request.auth.uid &&
+        request.resource.data.roleId != 'admin' &&
+        (resource == null || resource.data.roleId != 'admin')
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ---------- roles (Admin only) ----------
+    match /roles/{roleId} {
+      allow read: if isAdmin() || isActive();
+      allow write: if isAdmin();
+    }
+
+    // ---------- shop settings ----------
+    match /settings/{docId} {
+      allow read: if isAdmin() || isActive();
+      allow write: if can('shop_settings');
+    }
+
+    // ---------- internal ----------
+    match /meta/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Everything else is closed until its phase adds rules.
+  }
+}

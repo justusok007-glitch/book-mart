@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-urdu: "Noto Nastaliq Urdu", "Inter", serif;
+
+  /* Book Mart palette: deep ledger green, warm paper, amber accent */
+  --color-ink: #1d2a28;
+  --color-paper: #f7f3ea;
+  --color-card: #ffffff;
+  --color-line: #e4ddcd;
+  --color-muted: #6b7570;
+  --color-brand-50: #e8f3f1;
+  --color-brand-100: #cfe6e2;
+  --color-brand-500: #16766c;
+  --color-brand-600: #0f5e57;
+  --color-brand-700: #0b4a44;
+  --color-amber: #f2a93b;
+  --color-amber-50: #fdf3e2;
+  --color-danger: #c2412d;
+  --color-danger-50: #fbe9e5;
+  --color-ok: #2f8a4c;
+}
+
+html, body, #root { min-height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Urdu mode: Nastaliq needs extra line height */
+html[lang="ur"] body { font-family: var(--font-urdu); line-height: 2.1; }
+html[lang="ur"] input, html[lang="ur"] select, html[lang="ur"] button, html[lang="ur"] textarea { font-family: var(--font-urdu); }
+/* Keep numbers, emails and usernames readable in Latin font even in Urdu mode */
+.latin { font-family: var(--font-sans) !important; line-height: 1.5; }
+
+input, select, textarea { font-size: 16px; } /* stops phone zoom on focus */
+
+.field {
+  width: 100%;
+  border: 1.5px solid var(--color-line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  outline: none;
+  transition: border-color .15s;
+}
+.field:focus { border-color: var(--color-brand-500); }

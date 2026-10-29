@@ -214,7 +214,7 @@ export const STRINGS = {
   barcodeHint: { en: 'Type it, scan it, or tap New for a shop barcode.', ur: 'لکھیں، اسکین کریں، یا دکان کا نیا بارکوڈ بنائیں۔' },
   newCode: { en: 'New', ur: 'نیا' },
   scanBarcode: { en: 'Scan barcode', ur: 'بارکوڈ اسکین کریں' },
-  scanTip: { en: 'Hold the barcode inside the frame. A barcode gun can type straight into the box instead.', ur: 'بارکوڈ فریم کے اندر رکھیں۔ بارکوڈ گن سے براہِ راست خانے میں بھی لکھا جا سکتا ہے۔' },
+  scanTip: { en: 'Hold the phone 10–20 cm away with the barcode lines standing up (like ||||). In a dim shop, turn on the light. A barcode gun can type straight into the box instead.', ur: 'فون کو 10 سے 20 سینٹی میٹر دور رکھیں اور بارکوڈ کی لکیریں کھڑی ہوں (||||)۔ کم روشنی میں لائٹ آن کریں۔ بارکوڈ گن سے براہِ راست خانے میں بھی لکھا جا سکتا ہے۔' },
   typeInstead: { en: 'Type it instead', ur: 'خود لکھیں' },
   cameraDenied: { en: 'Camera permission was refused. Allow the camera in the phone settings, or type the barcode.', ur: 'کیمرے کی اجازت نہیں ملی۔ فون کی سیٹنگز میں اجازت دیں یا بارکوڈ لکھیں۔' },
   cameraFailed: { en: 'Could not start the camera. Type the barcode instead.', ur: 'کیمرہ نہیں کھل سکا۔ بارکوڈ خود لکھیں۔' },
@@ -240,4 +240,6 @@ export const STRINGS = {
   allStockedBody: { en: 'Nothing is at or below its low-stock alert.', ur: 'کوئی چیز اپنی کم اسٹاک حد تک نہیں پہنچی۔' },
   lowStockIntro: { en: 'colours/types are at or below their alert level.', ur: 'رنگ/اقسام اپنی حد تک یا اس سے کم ہیں۔' },
   arrange: { en: 'Arrange', ur: 'ترتیب' },
+  holdInBox: { en: 'Hold the barcode inside the box', ur: 'بارکوڈ کو خانے کے اندر رکھیں' },
+  torch: { en: 'Light', ur: 'لائٹ' },
 }

@@ -34,6 +34,8 @@ function score(e, q, tokens) {
 // Bold the typed part inside a label
 function Highlight({ text, tokens }) {
   if (!tokens.length || !text) return text
+  // Urdu letters join to each other; splitting a word into a highlight breaks the shapes, so skip it
+  if (/[\u0600-\u06FF]/.test(text)) return text
   const lower = text.toLowerCase()
   let best = null
   for (const tk of tokens) {

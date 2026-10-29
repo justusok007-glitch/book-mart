@@ -47,6 +47,8 @@ body {
 
 /* Urdu: Nastaliq needs more line height */
 html[lang="ur"] body { font-family: var(--font-urdu); line-height: 2.1; }
+/* Tailwind text sizes carry tight line heights that clip Nastaliq letters; loosen them in Urdu */
+html[lang="ur"] body *:not(.latin) { line-height: 1.95; }
 html[lang="ur"] input, html[lang="ur"] select, html[lang="ur"] button, html[lang="ur"] textarea { font-family: var(--font-urdu); }
 /* Numbers, prices, usernames stay in Latin font even in Urdu mode */
 .latin { font-family: var(--font-sans) !important; line-height: 1.5; }

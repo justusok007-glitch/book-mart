@@ -40,7 +40,9 @@ export function makeReceiptNo(d = new Date()) {
 export function returnValue(sale, returnLines) {
   const gross = returnLines.reduce((s, l) => s + l.qty * l.price, 0)
   const factor = sale.subtotal > 0 ? sale.total / sale.subtotal : 1
-  const amount = round2(gross * factor)
+  // whole rupees (no paisas in a shop), and never more than what is left of the bill
+  const left = Math.max(0, (sale.total || 0) - (sale.returnedTotal || 0))
+  const amount = Math.min(Math.round(gross * factor), left)
   const cost = round2(returnLines.reduce((s, l) => s + l.qty * (l.unitCost ?? 0), 0))
   return { amount, cost, items: returnLines.reduce((s, l) => s + l.qty, 0) }
 }

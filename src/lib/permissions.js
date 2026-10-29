@@ -108,9 +108,10 @@ export const FEATURES = [
   // Sell: design preview with sample data until Phase 4 builds the real one
   { key: 'sell', perm: 'sell', icon: 'cart', en: 'Sell', ur: 'فروخت', phase: 4, big: true, preview: true, path: '/sell' },
 
-  { key: 'items', group: 'stock', perm: 'view_items', icon: 'package', en: 'Items & Stock', ur: 'اشیاء و اسٹاک', phase: 2 },
+  { key: 'items', group: 'stock', perm: 'view_items', icon: 'package', en: 'Items & Stock', ur: 'اشیاء و اسٹاک', ready: true, path: '/items' },
+  { key: 'categories', group: 'stock', perm: 'manage_items', icon: 'grid', en: 'Categories', ur: 'کیٹیگریز', ready: true, path: '/categories' },
   { key: 'buy', group: 'stock', perm: 'buy', icon: 'truck', en: 'Buy', ur: 'خریداری', phase: 3 },
-  { key: 'low-stock', group: 'stock', perm: 'low_stock', icon: 'alert', en: 'Low Stock', ur: 'کم اسٹاک', phase: 3 },
+  { key: 'low-stock', group: 'stock', perm: 'low_stock', icon: 'alert', en: 'Low Stock', ur: 'کم اسٹاک', ready: true, path: '/low-stock' },
   { key: 'returns', group: 'stock', perm: 'sale_returns', icon: 'rotate', en: 'Returns', ur: 'واپسی', phase: 5 },
 
   { key: 'customers', group: 'people', perm: 'manage_customers', icon: 'user', en: 'Customers (Udhaar)', ur: 'گاہک (ادھار)', phase: 5 },

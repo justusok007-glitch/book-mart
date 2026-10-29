@@ -4,7 +4,7 @@ import { doc, getDoc, onSnapshot, serverTimestamp, setDoc, writeBatch } from 'fi
 import { auth, db, isAdminEmail, usernameToEmail } from '../lib/firebase'
 import { ADMIN_ONLY, DEFAULT_ROLES } from '../lib/permissions'
 
-const AuthContext = createContext(null)
+export const AuthContext = createContext(null)
 
 // First time the developer admin logs in: create the admin profile and the default roles.
 async function bootstrapAdmin(u) {

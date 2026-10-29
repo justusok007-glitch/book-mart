@@ -24,9 +24,12 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run build
+      - name: Build design-check harness (fake data, not deployed)
+        run: npx vite build --mode harness
       - name: Keep a copy of the build on the build-output branch (used for design checks)
         run: |
-          cd dist
+          mkdir -p out/harness && cp -r dist/. out/ && cp -r dist-harness/. out/harness/
+          cd out
           git init -q && git checkout -q -b build-output
           git add -A && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "build ${{ github.sha }}"
           git push -q -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} build-output

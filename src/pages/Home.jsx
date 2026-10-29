@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
 import { FEATURE_GROUPS, FEATURES } from '../lib/permissions'
+import { useCatalog } from '../lib/catalog'
 import { Badge, IconButton, OfflineBanner, SectionTitle } from '../components/ui'
 import Icon from '../components/Icon'
 
@@ -52,23 +53,35 @@ function Tile({ f }) {
 
 function TodayStrip() {
   const { t } = useLang()
+  const { ready, lowList } = useCatalog()
   const stats = [
     { label: t('todaySales'), icon: 'cart' },
     { label: t('cashInHand'), icon: 'cash' },
-    { label: t('lowStock'), icon: 'alert' },
+    { label: t('lowStock'), icon: 'alert', value: ready ? lowList.length : null, to: '/low-stock', danger: ready && lowList.length > 0 },
   ]
   return (
     <div className="mb-6">
       <div className="grid grid-cols-3 gap-2.5">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-line bg-white p-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted">
-              <Icon name={s.icon} size={14} />
-              <span className="truncate">{s.label}</span>
+        {stats.map((s) => {
+          const body = (
+            <>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted">
+                <Icon name={s.icon} size={14} />
+                <span className="truncate">{s.label}</span>
+              </div>
+              <div className={`latin mt-1 text-xl font-bold ${s.danger ? 'text-danger' : 'text-ink'}`}>{s.value ?? '—'}</div>
+            </>
+          )
+          return s.to ? (
+            <Link key={s.label} to={s.to} className="rounded-2xl border border-line bg-white p-3 transition-colors duration-150 hover:border-charcoal-500 active:bg-paper">
+              {body}
+            </Link>
+          ) : (
+            <div key={s.label} className="rounded-2xl border border-line bg-white p-3">
+              {body}
             </div>
-            <div className="latin mt-1 text-xl font-bold text-ink">—</div>
-          </div>
-        ))}
+          )
+        })}
       </div>
       <p className="mt-2 text-xs text-muted">{t('statsLater')}</p>
     </div>

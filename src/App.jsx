@@ -10,6 +10,12 @@ import Roles from './pages/Roles'
 import Settings from './pages/Settings'
 import ComingSoon from './pages/ComingSoon'
 import SellPreview from './pages/SellPreview'
+import Items from './pages/Items'
+import ItemDetail from './pages/ItemDetail'
+import ItemForm from './pages/ItemForm'
+import Categories from './pages/Categories'
+import LowStock from './pages/LowStock'
+import { CatalogProvider } from './lib/catalog'
 
 function RequirePerm({ perm, children }) {
   const { can } = useAuth()
@@ -42,7 +48,7 @@ function Blocked() {
   )
 }
 
-function Shell() {
+export function Shell() {
   const { user, loading, blocked } = useAuth()
   const { pathname } = useLocation()
   // Public link for the client to try the Sell design without logging in (sample data only)
@@ -56,6 +62,12 @@ function Shell() {
       <Route path="/users" element={<RequirePerm perm="manage_users"><Users /></RequirePerm>} />
       <Route path="/roles" element={<RequirePerm perm="manage_roles"><Roles /></RequirePerm>} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/items" element={<RequirePerm perm="view_items"><Items /></RequirePerm>} />
+      <Route path="/items/new" element={<RequirePerm perm="manage_items"><ItemForm /></RequirePerm>} />
+      <Route path="/items/:id" element={<RequirePerm perm="view_items"><ItemDetail /></RequirePerm>} />
+      <Route path="/items/:id/edit" element={<RequirePerm perm="manage_items"><ItemForm /></RequirePerm>} />
+      <Route path="/categories" element={<RequirePerm perm="manage_items"><Categories /></RequirePerm>} />
+      <Route path="/low-stock" element={<RequirePerm perm="low_stock"><LowStock /></RequirePerm>} />
       <Route path="/sell" element={<RequirePerm perm="sell"><SellPreview /></RequirePerm>} />
       <Route path="/soon/:key" element={<ComingSoon />} />
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -67,9 +79,11 @@ export default function App() {
   return (
     <LangProvider>
       <AuthProvider>
-        <HashRouter>
-          <Shell />
-        </HashRouter>
+        <CatalogProvider>
+          <HashRouter>
+            <Shell />
+          </HashRouter>
+        </CatalogProvider>
       </AuthProvider>
     </LangProvider>
   )

@@ -9,6 +9,7 @@ import { ALL_VARIANTS, SAMPLE_CATALOG, SAMPLE_CUSTOMERS } from '../lib/sampleCat
 import { Badge, Button, Field, IconButton, Notice, OfflineBanner, PageHeader, Rs, Sheet } from '../components/ui'
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
+import ProductSearch from '../components/ProductSearch'
 
 /* ---------- small pieces ---------- */
 
@@ -215,6 +216,11 @@ export default function SellPreview({ demo = false }) {
       <main className="mx-auto max-w-3xl px-4 pt-4">
         <div className="mb-4">
           <Notice type="warn">{t('demoNotice')}</Notice>
+        </div>
+
+        {/* 0. Search — type full or part of a name, colour or barcode */}
+        <div className="mb-4">
+          <ProductSearch entries={ALL_VARIANTS} qtyOf={qtyOf} onAdd={add} />
         </div>
 
         {/* 1. Scan / Select */}

@@ -141,4 +141,9 @@ export const STRINGS = {
   print: { en: 'Print', ur: 'پرنٹ' },
   printerLater: { en: 'Printing is set up when the printer arrives.', ur: 'پرنٹر آنے پر پرنٹنگ سیٹ کی جائے گی۔' },
   newSale: { en: 'New sale', ur: 'نئی فروخت' },
+  searchItems: { en: 'Search item, colour or barcode', ur: 'چیز، رنگ یا بارکوڈ تلاش کریں' },
+  clearSearch: { en: 'Clear search', ur: 'تلاش صاف کریں' },
+  searchResults: { en: 'Search results', ur: 'تلاش کے نتائج' },
+  noMatch: { en: 'Nothing matches', ur: 'کچھ نہیں ملا' },
+  moreResults: { en: 'more — type more letters to narrow down', ur: 'مزید — کم کرنے کے لیے مزید حروف لکھیں' },
 }

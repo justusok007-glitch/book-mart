@@ -165,7 +165,7 @@ export const SAMPLE_CUSTOMERS = [
   { id: 'c3', name: 'Usman Stationers', balance: 0 },
 ]
 
-// flat list used by the demo scanner
-export const ALL_VARIANTS = SAMPLE_CATALOG.flatMap((c) =>
-  c.subs.flatMap((s) => s.items.flatMap((i) => i.variants.map((v) => ({ item: i, variant: v })))),
+// flat list (one row per variant) used by search and the demo scanner
+export const ALL_VARIANTS = SAMPLE_CATALOG.flatMap((cat) =>
+  cat.subs.flatMap((sub) => sub.items.flatMap((item) => item.variants.map((variant) => ({ cat, sub, item, variant })))),
 )

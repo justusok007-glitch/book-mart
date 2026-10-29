@@ -11,17 +11,24 @@ import Icon from './Icon'
 const norm = (s) => (s || '').toString().toLowerCase().normalize('NFKC').trim()
 const MAX = 8
 
+const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 function score(e, q, tokens) {
   const name = norm(e.item.en) + ' ' + norm(e.item.ur)
   const hay = [e.item.en, e.item.ur, e.variant.en, e.variant.ur, e.sub.en, e.sub.ur, e.cat.en, e.cat.ur, e.variant.code]
     .map(norm)
     .join(' ')
   if (!tokens.every((tk) => hay.includes(tk))) return -1
-  if (e.variant.code && norm(e.variant.code) === q) return 100 // exact barcode
-  if (name.startsWith(q) || norm(e.item.ur).startsWith(q)) return 50
-  if (tokens.every((tk) => name.includes(tk))) return 30
-  if (name.includes(tokens[0])) return 20
-  return 10
+  if (e.variant.code && norm(e.variant.code) === q) return 1000 // exact barcode
+  let s = 0
+  if (name.startsWith(q)) s += 200
+  for (const tk of tokens) {
+    const atWordStart = new RegExp(`(^|\\s)${escapeRe(tk)}`)
+    if (atWordStart.test(name)) s += 40 // word in the item name starts with what was typed
+    else if (name.includes(tk)) s += 15
+    if (atWordStart.test(hay)) s += 10 // e.g. colour or category word starts with it
+  }
+  return s
 }
 
 // Bold the typed part inside a label
@@ -37,7 +44,7 @@ function Highlight({ text, tokens }) {
   return (
     <>
       {text.slice(0, best.i)}
-      <mark className="rounded bg-lime-100 px-0.5 text-charcoal">{text.slice(best.i, best.i + best.len)}</mark>
+      <mark className="rounded-sm bg-lime-100 text-charcoal">{text.slice(best.i, best.i + best.len)}</mark>
       {text.slice(best.i + best.len)}
     </>
   )
@@ -175,7 +182,7 @@ export default function ProductSearch({ entries, qtyOf = {}, onAdd }) {
                       </span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-semibold text-ink">
+                      <div className="line-clamp-2 font-semibold leading-snug text-ink">
                         <Highlight text={pick(e.item)} tokens={tokens} />
                         {many && (
                           <span className="font-normal text-muted">

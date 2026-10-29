@@ -38,6 +38,7 @@ export default function Categories() {
   // sheet: null | { mode: 'cat'|'sub', parentId?, initial? }
   const [sheet, setSheet] = useState(null)
   const [error, setError] = useState('')
+  const [arrange, setArrange] = useState(false)
 
   const countIn = (id) => items.filter((i) => i.catId === id || i.subId === id).length
 
@@ -78,9 +79,18 @@ export default function Categories() {
     <Page
       title={t('categories')}
       right={
-        <Button size="sm" className="me-1" onClick={() => setSheet({ mode: 'cat' })}>
-          <Icon name="plus" size={18} /> {t('addCategory')}
-        </Button>
+        <div className="flex items-center gap-1 pe-1">
+          {categories.length > 1 && (
+            <Button size="sm" variant={arrange ? 'accent' : 'secondary'} onClick={() => setArrange((a) => !a)} aria-pressed={arrange}>
+              {arrange ? t('done') : t('arrange')}
+            </Button>
+          )}
+          {!arrange && (
+            <Button size="sm" onClick={() => setSheet({ mode: 'cat' })}>
+              <Icon name="plus" size={18} /> {t('addCategory')}
+            </Button>
+          )}
+        </div>
       }
     >
       {!ready && (
@@ -122,32 +132,46 @@ export default function Categories() {
                 <div className="min-w-0 flex-1 py-2">
                   <div className="truncate text-lg font-bold text-charcoal">{pick(c)}</div>
                   <div className="truncate text-sm text-muted">
-                    {pick({ en: c.ur, ur: c.en })} · <span className="latin">{countIn(c.id)}</span> {t('itemsWord')}
+                    <bdi>{pick({ en: c.ur, ur: c.en })}</bdi> · <span className="latin">{countIn(c.id)}</span> {t('itemsWord')}
                   </div>
                 </div>
-                {moveBtn(categories, i, -1)}
-                {moveBtn(categories, i, 1)}
-                <IconButton icon="pencil" label={t('edit')} onClick={() => setSheet({ mode: 'cat', initial: c })} size={18} />
-                <IconButton icon="trash" label={t('delete')} onClick={() => remove(c)} size={18} className="text-danger" />
+                {arrange ? (
+                  <>
+                    {moveBtn(categories, i, -1)}
+                    {moveBtn(categories, i, 1)}
+                  </>
+                ) : (
+                  <>
+                    <IconButton icon="pencil" label={t('edit')} onClick={() => setSheet({ mode: 'cat', initial: c })} size={18} />
+                    <IconButton icon="trash" label={t('delete')} onClick={() => remove(c)} size={18} className="text-danger" />
+                  </>
+                )}
               </div>
               <ul>
                 {subs.map((s, j) => (
                   <li key={s.id} className="flex min-h-14 items-center gap-1 border-b border-line/70 ps-4 pe-1 last:border-0">
                     <span className="h-2 w-2 shrink-0 rounded-full bg-lime" aria-hidden="true" />
-                    <div className="min-w-0 flex-1 px-2">
-                      <span className="font-semibold">{pick(s)}</span>
-                      <span className="ms-2 text-sm text-muted">
+                    <div className="min-w-0 flex-1 px-2 py-1">
+                      <div className="font-semibold leading-snug">{pick(s)}</div>
+                      <div className="text-sm text-muted">
                         <span className="latin">{countIn(s.id)}</span> {t('itemsWord')}
-                      </span>
+                      </div>
                     </div>
-                    {moveBtn(subs, j, -1)}
-                    {moveBtn(subs, j, 1)}
-                    <IconButton icon="pencil" label={t('edit')} onClick={() => setSheet({ mode: 'sub', initial: s })} size={18} />
-                    <IconButton icon="trash" label={t('delete')} onClick={() => remove(s)} size={18} className="text-danger" />
+                    {arrange ? (
+                      <>
+                        {moveBtn(subs, j, -1)}
+                        {moveBtn(subs, j, 1)}
+                      </>
+                    ) : (
+                      <>
+                        <IconButton icon="pencil" label={t('edit')} onClick={() => setSheet({ mode: 'sub', initial: s })} size={18} />
+                        <IconButton icon="trash" label={t('delete')} onClick={() => remove(s)} size={18} className="text-danger" />
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
-              <div className="p-2">
+              <div className={`p-2 ${arrange ? 'hidden' : ''}`}>
                 <Button variant="ghost" size="sm" onClick={() => setSheet({ mode: 'sub', parentId: c.id })}>
                   <Icon name="plus" size={16} /> {t('addSubCategory')}
                 </Button>

@@ -239,4 +239,5 @@ export const STRINGS = {
   allStocked: { en: 'All stocked up', ur: 'سب اسٹاک پورا ہے' },
   allStockedBody: { en: 'Nothing is at or below its low-stock alert.', ur: 'کوئی چیز اپنی کم اسٹاک حد تک نہیں پہنچی۔' },
   lowStockIntro: { en: 'colours/types are at or below their alert level.', ur: 'رنگ/اقسام اپنی حد تک یا اس سے کم ہیں۔' },
+  arrange: { en: 'Arrange', ur: 'ترتیب' },
 }

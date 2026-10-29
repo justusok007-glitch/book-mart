@@ -31,7 +31,7 @@ function Section({ title, hint, children, right }) {
 const numInput = (v) => v.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
 const intInput = (v) => v.replace(/[^\d]/g, '')
 
-function BarcodeField({ value, onChange, onScan, error }) {
+function BarcodeField({ value, onChange, onScan, error, showHint }) {
   const { t } = useLang()
   const [busy, setBusy] = useState(false)
   const [genError, setGenError] = useState('')
@@ -47,7 +47,7 @@ function BarcodeField({ value, onChange, onScan, error }) {
     setBusy(false)
   }
   return (
-    <Field label={t('barcode')} hint={t('barcodeHint')} error={error || genError}>
+    <Field label={t('barcode')} hint={showHint ? t('barcodeHint') : undefined} error={error || genError}>
       <div className="flex gap-2">
         <input
           className="field latin min-w-0 flex-1"
@@ -367,7 +367,7 @@ export default function ItemForm() {
             {hasTypes && rows.length === 0 && <Notice type="info">{t('pickColoursAbove')}</Notice>}
 
             <div className="space-y-3">
-              {rows.map((r) => {
+              {rows.map((r, idx) => {
                 const errs = rowErrors[r.key] || {}
                 const hidden = r.active === false
                 return (
@@ -413,6 +413,7 @@ export default function ItemForm() {
                       <BarcodeField
                         value={r.barcode}
                         error={errs.barcode}
+                        showHint={idx === 0}
                         onChange={(v) => updateRow(r.key, { barcode: v })}
                         onScan={() => setScanFor(r.key)}
                       />

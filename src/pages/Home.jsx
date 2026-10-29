@@ -65,9 +65,9 @@ function TodayStrip() {
         {stats.map((s) => {
           const body = (
             <>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted">
-                <Icon name={s.icon} size={14} />
-                <span className="truncate">{s.label}</span>
+              <div className="flex items-start gap-1.5 text-xs font-semibold leading-tight text-muted">
+                <Icon name={s.icon} size={14} className="mt-px shrink-0" />
+                <span>{s.label}</span>
               </div>
               <div className={`latin mt-1 text-xl font-bold ${s.danger ? 'text-danger' : 'text-ink'}`}>{s.value ?? '—'}</div>
             </>

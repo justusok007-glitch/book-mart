@@ -5,6 +5,10 @@ English + Urdu, works offline, roles & permissions set by the Admin.
 
 **Preview:** https://justusok007-glitch.github.io/book-mart/ (updates automatically on every push to `main`)
 
+**Sell screen demo for the client (no login, sample data):** https://justusok007-glitch.github.io/book-mart/#/demo/sell
+
+Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, flat style, 48px touch targets. Lime is only used as a fill with charcoal text on it.
+
 ## Stack
 - React + Vite + Tailwind CSS
 - Firebase Authentication (username/password) + Cloud Firestore with offline cache

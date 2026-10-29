@@ -31,3 +31,22 @@ export function makeReceiptNo(d = new Date()) {
   const rnd = Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, '0')
   return `${String(d.getFullYear()).slice(2)}${p(d.getMonth() + 1)}${p(d.getDate())}-${rnd}`
 }
+
+/**
+ * Value of items handed back from a sale.
+ * Any bill discount is shared out in proportion, so returning half the goods refunds half the discounted total.
+ * returnLines: [{ qty, price, unitCost }]
+ */
+export function returnValue(sale, returnLines) {
+  const gross = returnLines.reduce((s, l) => s + l.qty * l.price, 0)
+  const factor = sale.subtotal > 0 ? sale.total / sale.subtotal : 1
+  const amount = round2(gross * factor)
+  const cost = round2(returnLines.reduce((s, l) => s + l.qty * (l.unitCost ?? 0), 0))
+  return { amount, cost, items: returnLines.reduce((s, l) => s + l.qty, 0) }
+}
+
+// how many of each line can still be returned
+export function returnable(sale) {
+  const done = sale.returned || {}
+  return sale.lines.map((l) => ({ ...l, max: Math.max(0, l.qty - (done[l.variantId] || 0)) }))
+}

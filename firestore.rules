@@ -140,6 +140,13 @@ service cloud.firestore {
         && request.resource.data.by == request.auth.uid
         && (request.resource.data.discount == 0 || can('sell_discount'))
         && (request.resource.data.due == 0 || can('sell_credit'));
+      // returns may only record what came back
+      allow update: if can('sale_returns')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['returned', 'returnedTotal', 'updatedAt']);
+    }
+    match /returns/{id} {
+      allow read: if can('sale_returns') || can('view_sales') || can('view_reports') || can('daily_closing');
+      allow create: if can('sale_returns') && request.resource.data.by == request.auth.uid;
     }
     // running daily totals (each sale adds to them)
     match /dailyStats/{day} {

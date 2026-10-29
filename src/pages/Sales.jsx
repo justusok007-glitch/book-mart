@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
 import { fetchSale, fetchSalesForDay, useShopSettings } from '../lib/selling'
 import { dayKey } from '../lib/saleMath'
 import { toDate } from '../lib/format'
-import { Badge, Button, Card, EmptyState, Page, Rs, Spinner } from '../components/ui'
+import { Badge, Button, Card, EmptyState, Notice, Page, Rs, Sheet, Spinner } from '../components/ui'
+import { ReturnForm } from './Returns'
 import { printReceipt, ReceiptView, shareReceipt } from '../components/Receipt'
 import Icon from '../components/Icon'
 
@@ -97,9 +98,10 @@ export function SalesList() {
                     </div>
                     <div className="text-end">
                       <Rs value={s.total} className="font-bold" />
-                      {s.due > 0 && (
-                        <div>
-                          <Badge tone="danger">{t('credit')}</Badge>
+                      {(s.due > 0 || s.returnedTotal > 0) && (
+                        <div className="flex justify-end gap-1">
+                          {s.due > 0 && <Badge tone="danger">{t('credit')}</Badge>}
+                          {s.returnedTotal > 0 && <Badge>{t('returnedBadge')}</Badge>}
                         </div>
                       )}
                     </div>
@@ -121,12 +123,18 @@ export function SaleDetail() {
   const shop = useShopSettings()
   const [sale, setSale] = useState(undefined)
   const [msg, setMsg] = useState('')
+  const [params] = useSearchParams()
+  const [returning, setReturning] = useState(false)
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
     fetchSale(id)
-      .then(setSale)
+      .then((s) => {
+        setSale(s)
+        if (s && params.get('return') && can('sale_returns') && reload === 0) setReturning(true)
+      })
       .catch(() => setSale(null))
-  }, [id])
+  }, [id, reload])
 
   if (sale === undefined)
     return (
@@ -147,6 +155,11 @@ export function SaleDetail() {
     <Page title={`${t('sale')} #${sale.receiptNo}`}>
       <div className="space-y-4">
         <ReceiptView sale={sale} shop={shop} />
+        {sale.returnedTotal > 0 && (
+          <Notice type="warn">
+            {t('itemsReturnedFromSale')} <Rs value={sale.returnedTotal} className="font-bold" />
+          </Notice>
+        )}
         {can('view_profit_loss') && (
           <Card className="space-y-1 p-4 text-sm">
             <div className="flex justify-between">
@@ -174,8 +187,25 @@ export function SaleDetail() {
             <Icon name="share" size={20} /> {t('share')}
           </Button>
         </div>
+        {can('sale_returns') && (
+          <Button size="lg" className="w-full" onClick={() => setReturning(true)}>
+            <Icon name="rotate" size={20} /> {t('returnItems')}
+          </Button>
+        )}
         {msg && <p className="text-center text-sm text-leaf">{msg}</p>}
       </div>
+      <Sheet open={returning} title={`${t('returnItems')} #${sale.receiptNo}`} onClose={() => setReturning(false)}>
+        {returning && (
+          <ReturnForm
+            sale={sale}
+            onDone={(res) => {
+              setReturning(false)
+              setMsg(`${t('returnSaved')} — Rs ${res.amount.toLocaleString('en-PK')}`)
+              setTimeout(() => setReload((r) => r + 1), 300)
+            }}
+          />
+        )}
+      </Sheet>
     </Page>
   )
 }

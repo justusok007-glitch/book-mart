@@ -21,6 +21,8 @@ import Suppliers from './pages/Suppliers'
 import SupplierDetail from './pages/SupplierDetail'
 import { PurchaseDetail, PurchasesList } from './pages/Purchases'
 import { SaleDetail, SalesList } from './pages/Sales'
+import Returns from './pages/Returns'
+import { CustomerDetail, CustomersList } from './pages/Customers'
 
 function RequirePerm({ perm, children }) {
   const { can } = useAuth()
@@ -85,6 +87,9 @@ export function Shell() {
       <Route path="/suppliers/:id" element={<RequireAny perms={['manage_suppliers', 'buy', 'pay_suppliers']}><SupplierDetail /></RequireAny>} />
       <Route path="/sales" element={<RequireAny perms={['view_sales', 'view_reports', 'daily_closing']}><SalesList /></RequireAny>} />
       <Route path="/sales/:id" element={<RequireAny perms={['view_sales', 'view_reports', 'daily_closing', 'sale_returns']}><SaleDetail /></RequireAny>} />
+      <Route path="/returns" element={<RequirePerm perm="sale_returns"><Returns /></RequirePerm>} />
+      <Route path="/customers" element={<RequireAny perms={['manage_customers', 'receive_payments', 'sell_credit']}><CustomersList /></RequireAny>} />
+      <Route path="/customers/:id" element={<RequireAny perms={['manage_customers', 'receive_payments', 'sell_credit']}><CustomerDetail /></RequireAny>} />
       <Route path="/sell" element={<RequirePerm perm="sell"><SellPreview /></RequirePerm>} />
       <Route path="/soon/:key" element={<ComingSoon />} />
       <Route path="*" element={<Navigate to="/" replace />} />

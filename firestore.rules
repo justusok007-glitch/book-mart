@@ -76,7 +76,11 @@ service cloud.firestore {
     }
     match /variants/{id} {
       allow read: if canReadShop();
-      allow write: if can('manage_items');
+      allow create, delete: if can('manage_items');
+      // buying and adjusting may only change the stock number
+      allow update: if can('manage_items')
+        || ((can('buy') || can('stock_adjust'))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']));
     }
     // one doc per barcode keeps barcodes unique
     match /barcodes/{code} {
@@ -85,17 +89,43 @@ service cloud.firestore {
     }
     // cost prices are hidden from roles without "See cost price"
     match /itemCosts/{id} {
-      allow read: if can('view_cost_price');
-      allow write: if can('manage_items') && can('view_cost_price');
+      allow read: if can('view_cost_price') || can('buy');
+      allow write: if (can('manage_items') && can('view_cost_price')) || can('buy');
     }
     // stock history: Phase 2 writes opening stock only
     match /stockMoves/{id} {
       allow read: if can('view_items');
-      allow create: if can('manage_items') && request.resource.data.type == 'opening'
-                    && request.resource.data.by == request.auth.uid;
+      allow create: if request.resource.data.by == request.auth.uid && (
+           (request.resource.data.type == 'opening'  && can('manage_items'))
+        || (request.resource.data.type == 'purchase' && can('buy'))
+        || (request.resource.data.type == 'adjust'   && can('stock_adjust'))
+      );
     }
     match /counters/barcode {
       allow read, write: if can('manage_items');
+    }
+
+    // ---------- buying & suppliers (Phase 3) ----------
+    function supplierAccess() { return can('manage_suppliers') || can('buy') || can('pay_suppliers'); }
+
+    match /suppliers/{id} {
+      allow read: if supplierAccess();
+      allow create: if can('manage_suppliers');
+      // details: manage_suppliers. Balance only: buying or paying.
+      allow update: if can('manage_suppliers')
+        || ((can('buy') || can('pay_suppliers'))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'updatedAt']));
+    }
+    match /supplierLedger/{id} {
+      allow read: if supplierAccess();
+      allow create: if request.resource.data.by == request.auth.uid && (
+           (request.resource.data.type == 'purchase' && can('buy'))
+        || (request.resource.data.type == 'payment' && (can('pay_suppliers') || can('buy')))
+      );
+    }
+    match /purchases/{id} {
+      allow read: if can('buy') || can('manage_suppliers') || can('view_reports');
+      allow create: if can('buy') && request.resource.data.by == request.auth.uid;
     }
 
     // Everything else is closed until its phase adds rules.

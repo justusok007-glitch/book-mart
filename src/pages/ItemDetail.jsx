@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
 import { fetchMoves, useCatalog } from '../lib/catalog'
 import { UNITS } from '../lib/colors'
-import { Badge, Button, Card, EmptyState, Page, Rs, SectionTitle, Spinner } from '../components/ui'
+import { Badge, Button, Card, EmptyState, Field, Notice, Page, Rs, SectionTitle, Segmented, Sheet, Spinner } from '../components/ui'
+import { ADJUST_REASONS, adjustStock } from '../lib/purchasing'
 import { Dot, StockNumber } from '../components/ItemBits'
 import Icon from '../components/Icon'
 
@@ -30,6 +31,7 @@ export default function ItemDetail() {
   const { ready, itemById, catById, variantsOf, itemStock, isLow, costs } = useCatalog()
   const item = itemById[id]
   const [moves, setMoves] = useState(null)
+  const [adjusting, setAdjusting] = useState(false)
 
   // reload history whenever stock changes
   const stockKey = item ? itemStock(id) : 0
@@ -148,6 +150,20 @@ export default function ItemDetail() {
             </ul>
           </Card>
           <p className="mt-2 text-sm text-muted">{t('stockChangesNote')}</p>
+          {(can('buy') || can('stock_adjust')) && (
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {can('buy') && (
+                <Button variant="accent" onClick={() => navigate(`/buy?item=${id}`)}>
+                  <Icon name="truck" size={18} /> {t('buyMore')}
+                </Button>
+              )}
+              {can('stock_adjust') && (
+                <Button variant="secondary" onClick={() => setAdjusting(true)}>
+                  <Icon name="sliders" size={18} /> {t('adjustStock')}
+                </Button>
+              )}
+            </div>
+          )}
         </section>
 
         {/* history */}
@@ -172,6 +188,8 @@ export default function ItemDetail() {
                       <div className="text-sm text-muted">
                         <span className="latin">{fmtDate(m.at)}</span>
                         {m.byName && <> · {m.byName}</>}
+                        {m.reason && <> · {pick(ADJUST_REASONS.find((r) => r.key === m.reason) || { en: m.reason })}</>}
+                        {m.note && <> · {m.note}</>}
                       </div>
                     </div>
                     <span className={`latin text-lg font-bold ${m.qty < 0 ? 'text-danger' : 'text-leaf'}`} dir="ltr">
@@ -185,6 +203,92 @@ export default function ItemDetail() {
           )}
         </section>
       </div>
+      <Sheet open={adjusting} title={t('adjustStock')} onClose={() => setAdjusting(false)}>
+        {adjusting && <AdjustForm item={item} variants={all.filter((v) => v.active !== false)} multi={multi} onDone={() => setAdjusting(false)} />}
+      </Sheet>
     </Page>
+  )
+}
+
+function AdjustForm({ item, variants, multi, onDone }) {
+  const { t, pick } = useLang()
+  const { user, displayName } = useAuth()
+  const [variantId, setVariantId] = useState(variants[0]?.id || '')
+  const [dir, setDir] = useState('remove')
+  const [qty, setQty] = useState('')
+  const [reason, setReason] = useState('damaged')
+  const [note, setNote] = useState('')
+  const [error, setError] = useState('')
+  const v = variants.find((x) => x.id === variantId)
+  const n = Math.floor(Number(qty) || 0)
+  const after = (v?.stock ?? 0) + (dir === 'add' ? n : -n)
+
+  return (
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (!v || n < 1) return setError(t('enterQty'))
+        adjustStock({ itemId: item.id, variantId: v.id, delta: dir === 'add' ? n : -n, reason, note, user: { uid: user.uid, name: displayName } })
+        onDone()
+      }}
+    >
+      {multi && (
+        <Field label={t('colourType')}>
+          <select className="field" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
+            {variants.map((x) => (
+              <option key={x.id} value={x.id}>
+                {pick(x)} — {x.stock ?? 0}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+      <Segmented
+        value={dir}
+        onChange={(d) => {
+          setDir(d)
+          setReason(d === 'add' ? 'found' : 'damaged')
+        }}
+        options={[
+          { value: 'remove', label: t('removeStock') },
+          { value: 'add', label: t('addStock') },
+        ]}
+      />
+      <Field label={t('qty')}>
+        <input
+          className="field latin text-lg font-bold"
+          dir="ltr"
+          inputMode="numeric"
+          value={qty}
+          placeholder="0"
+          autoFocus
+          onChange={(e) => setQty(e.target.value.replace(/[^\d]/g, ''))}
+        />
+      </Field>
+      <Field label={t('reason')}>
+        <select className="field" value={reason} onChange={(e) => setReason(e.target.value)}>
+          {ADJUST_REASONS.map((r) => (
+            <option key={r.key} value={r.key}>
+              {pick(r)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={`${t('note')} (${t('optional')})`}>
+        <input className="field" value={note} onChange={(e) => setNote(e.target.value)} />
+      </Field>
+      <div className="flex items-center justify-between rounded-xl bg-paper px-4 py-3">
+        <span className="text-muted">{t('stockAfter')}</span>
+        <span className={`latin text-xl font-bold ${after < 0 ? 'text-danger' : ''}`}>
+          {v?.stock ?? 0} → {after}
+        </span>
+      </div>
+      <p className="text-sm text-muted">{t('adjustNote')}</p>
+      <Notice>{error}</Notice>
+      <Button type="submit" size="lg" className="w-full">
+        <Icon name="check" size={20} /> {t('saveAdjustment')}
+      </Button>
+    </form>
   )
 }

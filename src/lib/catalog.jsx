@@ -105,9 +105,11 @@ export function buildCatalog(cats, items, variants, costs) {
     for (const item of activeItems) {
       const cat = catById[item.catId] || { en: '—', ur: '—' }
       const sub = catById[item.subId] || { en: '—', ur: '—' }
-      for (const v of variantsOf(item.id)) {
-        entries.push({ cat, sub, item, variant: v })
-        if (isLow(v, item)) lowList.push({ cat, sub, item, variant: v })
+      // item node carries its colours (and barcode as `code`) for search/sell/buy screens
+      const node = { ...item, variants: variantsOf(item.id).map((v) => ({ ...v, code: v.barcode })) }
+      for (const v of node.variants) {
+        entries.push({ cat, sub, item: node, variant: v })
+        if (isLow(v, item)) lowList.push({ cat, sub, item: node, variant: v })
       }
     }
     lowList.sort((a, b) => (a.variant.stock ?? 0) - (b.variant.stock ?? 0))

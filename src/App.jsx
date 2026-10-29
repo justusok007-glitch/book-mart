@@ -16,6 +16,10 @@ import ItemForm from './pages/ItemForm'
 import Categories from './pages/Categories'
 import LowStock from './pages/LowStock'
 import { CatalogProvider } from './lib/catalog'
+import Buy from './pages/Buy'
+import Suppliers from './pages/Suppliers'
+import SupplierDetail from './pages/SupplierDetail'
+import { PurchaseDetail, PurchasesList } from './pages/Purchases'
 
 function RequirePerm({ perm, children }) {
   const { can } = useAuth()
@@ -28,6 +32,11 @@ function RequirePerm({ perm, children }) {
     )
   }
   return children
+}
+
+function RequireAny({ perms, children }) {
+  const { can } = useAuth()
+  return perms.some((p) => can(p)) ? children : <RequirePerm perm={perms[0]}>{children}</RequirePerm>
 }
 
 function Blocked() {
@@ -68,6 +77,11 @@ export function Shell() {
       <Route path="/items/:id/edit" element={<RequirePerm perm="manage_items"><ItemForm /></RequirePerm>} />
       <Route path="/categories" element={<RequirePerm perm="manage_items"><Categories /></RequirePerm>} />
       <Route path="/low-stock" element={<RequirePerm perm="low_stock"><LowStock /></RequirePerm>} />
+      <Route path="/buy" element={<RequirePerm perm="buy"><Buy /></RequirePerm>} />
+      <Route path="/purchases" element={<RequireAny perms={['buy', 'manage_suppliers', 'view_reports']}><PurchasesList /></RequireAny>} />
+      <Route path="/purchases/:id" element={<RequireAny perms={['buy', 'manage_suppliers', 'view_reports']}><PurchaseDetail /></RequireAny>} />
+      <Route path="/suppliers" element={<RequireAny perms={['manage_suppliers', 'buy', 'pay_suppliers']}><Suppliers /></RequireAny>} />
+      <Route path="/suppliers/:id" element={<RequireAny perms={['manage_suppliers', 'buy', 'pay_suppliers']}><SupplierDetail /></RequireAny>} />
       <Route path="/sell" element={<RequirePerm perm="sell"><SellPreview /></RequirePerm>} />
       <Route path="/soon/:key" element={<ComingSoon />} />
       <Route path="*" element={<Navigate to="/" replace />} />

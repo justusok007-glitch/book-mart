@@ -257,3 +257,49 @@ export function Rs({ value, className = '' }) {
     </span>
   )
 }
+
+/* ---------- Segmented choice (radio buttons) ---------- */
+export function Segmented({ options, value, onChange, size = 'md' }) {
+  return (
+    <div role="radiogroup" className="grid gap-2" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      {options.map((o) => {
+        const active = value === o.value
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            disabled={o.disabled}
+            onClick={() => onChange(o.value)}
+            className={`flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-[1.5px] px-3 font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40 ${
+              size === 'lg' ? 'min-h-14 text-lg' : 'min-h-12'
+            } ${active ? 'border-charcoal bg-charcoal text-white' : 'border-line bg-white text-ink hover:border-charcoal-500'}`}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ---------- Money input with Rs prefix ---------- */
+export function MoneyInput({ value, onChange, className = '', ...props }) {
+  return (
+    <div className="relative">
+      <span className="latin pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-muted" dir="ltr">
+        Rs
+      </span>
+      <input
+        className={`field latin ps-11 ${className}`}
+        dir="ltr"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1'))}
+        placeholder="0"
+        {...props}
+      />
+    </div>
+  )
+}

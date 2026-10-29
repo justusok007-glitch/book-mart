@@ -110,12 +110,13 @@ export const FEATURES = [
 
   { key: 'items', group: 'stock', perm: 'view_items', icon: 'package', en: 'Items & Stock', ur: 'اشیاء و اسٹاک', ready: true, path: '/items' },
   { key: 'categories', group: 'stock', perm: 'manage_items', icon: 'grid', en: 'Categories', ur: 'کیٹیگریز', ready: true, path: '/categories' },
-  { key: 'buy', group: 'stock', perm: 'buy', icon: 'truck', en: 'Buy', ur: 'خریداری', phase: 3 },
+  { key: 'buy', group: 'stock', perm: 'buy', icon: 'truck', en: 'Buy', ur: 'خریداری', ready: true, path: '/buy' },
+  { key: 'purchases', group: 'stock', perm: 'buy', icon: 'receipt', en: 'Purchases', ur: 'خریداری کا ریکارڈ', ready: true, path: '/purchases' },
   { key: 'low-stock', group: 'stock', perm: 'low_stock', icon: 'alert', en: 'Low Stock', ur: 'کم اسٹاک', ready: true, path: '/low-stock' },
   { key: 'returns', group: 'stock', perm: 'sale_returns', icon: 'rotate', en: 'Returns', ur: 'واپسی', phase: 5 },
 
   { key: 'customers', group: 'people', perm: 'manage_customers', icon: 'user', en: 'Customers (Udhaar)', ur: 'گاہک (ادھار)', phase: 5 },
-  { key: 'suppliers', group: 'people', perm: 'manage_suppliers', icon: 'truck', en: 'Suppliers', ur: 'سپلائرز', phase: 3 },
+  { key: 'suppliers', group: 'people', perm: 'manage_suppliers', icon: 'truck', en: 'Suppliers', ur: 'سپلائرز', ready: true, path: '/suppliers' },
 
   { key: 'closing', group: 'money', perm: 'daily_closing', icon: 'clipboard', en: 'Daily Closing', ur: 'روزانہ حساب', phase: 6 },
   { key: 'cash-out', group: 'money', perm: 'cash_out', icon: 'cash', en: 'Cash Out', ur: 'کیش آؤٹ', phase: 6 },

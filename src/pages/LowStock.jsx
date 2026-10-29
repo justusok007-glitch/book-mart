@@ -1,16 +1,29 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
 import { useCatalog } from '../lib/catalog'
-import { Badge, EmptyState, Page, Spinner } from '../components/ui'
+import { Badge, Button, EmptyState, Page, Spinner } from '../components/ui'
 import { Dot, StockNumber } from '../components/ItemBits'
 import Icon from '../components/Icon'
 
 export default function LowStock() {
   const { t, pick } = useLang()
   const { ready, lowList } = useCatalog()
+  const { can } = useAuth()
+  const navigate = useNavigate()
 
   return (
-    <Page title={t('lowStock')}>
+    <Page
+      title={t('lowStock')}
+      right={
+        can('buy') &&
+        lowList.length > 0 && (
+          <Button size="sm" variant="accent" className="me-1" onClick={() => navigate('/buy?low=1')}>
+            <Icon name="truck" size={18} /> {t('buyThese')}
+          </Button>
+        )
+      }
+    >
       {!ready && (
         <div className="flex justify-center py-16">
           <Spinner />

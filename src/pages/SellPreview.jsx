@@ -308,8 +308,10 @@ export default function SellPreview({ demo = false }) {
                       </span>
                     )}
                     <span className="pe-8 font-semibold leading-snug text-ink">{pick(item)}</span>
-                    <span>
-                      <Rs value={item.price} className="block text-xl font-bold text-charcoal" />
+                    <span className="block">
+                      <span className="block">
+                        <Rs value={item.price} className="text-xl font-bold text-charcoal" />
+                      </span>
                       <span className="text-sm text-muted">
                         {item.variants.length > 1 ? (
                           <>
@@ -329,7 +331,7 @@ export default function SellPreview({ demo = false }) {
       </main>
 
       {/* toast */}
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-28 z-[60] flex justify-center px-4">
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-20 z-[60] flex justify-center px-4">
         {toast && (
           <div className="flex max-w-sm items-center gap-2 rounded-full bg-charcoal px-4 py-2.5 text-sm font-semibold text-white shadow-lg">
             <Icon name="checkCircle" size={18} className="text-lime" />

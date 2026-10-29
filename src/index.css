@@ -52,10 +52,11 @@ html[lang="ur"] input, html[lang="ur"] select, html[lang="ur"] button, html[lang
 .latin { font-family: var(--font-sans) !important; line-height: 1.5; }
 
 /* Visible keyboard focus everywhere */
-:focus-visible { outline: 3px solid var(--color-leaf); outline-offset: 2px; border-radius: 8px; }
+:focus-visible { outline: 3px solid var(--color-leaf); outline-offset: 2px; }
 
 input, select, textarea { font-size: 16px; } /* prevents zoom on phone focus */
 
+@layer components {
 .field {
   width: 100%;
   min-height: 48px;
@@ -68,6 +69,7 @@ input, select, textarea { font-size: 16px; } /* prevents zoom on phone focus */
 }
 .field:focus { border-color: var(--color-charcoal); box-shadow: 0 0 0 3px var(--color-lime-100); }
 .field:disabled { background: var(--color-paper); color: var(--color-muted); }
+}
 
 /* Safe areas for phones with notches / gesture bars */
 .safe-top { padding-top: env(safe-area-inset-top); }

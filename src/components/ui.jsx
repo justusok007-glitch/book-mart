@@ -135,13 +135,18 @@ export function SectionTitle({ children, action }) {
 /* ---------- Sheet (bottom sheet on phones, dialog on wide screens) ---------- */
 export function Sheet({ open, title, onClose, children }) {
   const panel = useRef(null)
+  // keep the latest onClose without re-running the effect on every keystroke
+  // (re-running it used to move focus away from the box being typed in and close the phone keyboard)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
   useEffect(() => {
     if (!open) return
-    const onKey = (e) => e.key === 'Escape' && onClose()
+    const onKey = (e) => e.key === 'Escape' && closeRef.current()
     window.addEventListener('keydown', onKey)
-    panel.current?.focus()
+    // focus the panel only when it opens, and only if nothing inside it (e.g. an autoFocus box) has focus
+    if (!panel.current?.contains(document.activeElement)) panel.current?.focus()
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open])
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>

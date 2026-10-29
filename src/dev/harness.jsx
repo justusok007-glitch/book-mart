@@ -52,7 +52,7 @@ const items = [
 ]
 const v = (id, itemId, en, ur, dot, stock, barcode, order) => ({ id, itemId, en, ur, dot, stock, barcode, order, active: true })
 const variants = [
-  v('v1', 'i1', 'Blue', 'نیلا', '#2557c7', 48, '8961000000011', 0),
+  v('v1', 'i1', 'Blue', 'نیلا', '#2557c7', 48, '8961000000013', 0),
   v('v2', 'i1', 'Black', 'کالا', '#222222', 35, '8961000000028', 1),
   v('v3', 'i1', 'Red', 'لال', '#d23a2a', 6, '8961000000035', 2),
   v('v4', 'i1', 'Green', 'سبز', '#2f8a4c', 0, null, 3),

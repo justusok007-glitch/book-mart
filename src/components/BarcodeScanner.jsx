@@ -6,7 +6,7 @@ import { useLang } from '../context/LangContext'
 import { startScanner } from '../lib/scanner'
 import { Button, IconButton, Notice, Sheet, Spinner } from './ui'
 
-function Viewfinder({ onResult, onError }) {
+export function Viewfinder({ onResult, onError, compact = false }) {
   const { t } = useLang()
   const video = useRef(null)
   const [starting, setStarting] = useState(true)
@@ -40,7 +40,7 @@ function Viewfinder({ onResult, onError }) {
   }, [])
 
   return (
-    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-charcoal sm:aspect-[4/3]">
+    <div className={`relative w-full overflow-hidden rounded-2xl bg-charcoal ${compact ? 'aspect-[4/3]' : 'aspect-[3/4] sm:aspect-[4/3]'}`}>
       <video ref={video} className="h-full w-full object-cover" muted playsInline />
 
       {/* dark outside, clear box in the middle = where to hold the barcode */}

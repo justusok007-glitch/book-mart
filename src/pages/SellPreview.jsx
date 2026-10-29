@@ -6,7 +6,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
 import { ALL_VARIANTS, SAMPLE_CATALOG, SAMPLE_CUSTOMERS } from '../lib/sampleCatalog'
-import { Badge, Button, Field, IconButton, Notice, OfflineBanner, PageHeader, Rs, Sheet } from '../components/ui'
+import { useCatalog } from '../lib/catalog'
+import { Viewfinder } from '../components/BarcodeScanner'
+import { Badge, Button, EmptyState, Field, IconButton, Notice, OfflineBanner, PageHeader, Rs, Sheet, Spinner } from '../components/ui'
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
 import ProductSearch from '../components/ProductSearch'
@@ -121,9 +123,12 @@ export default function SellPreview({ demo = false }) {
   const { t, pick } = useLang()
   const auth = useAuth()
   const can = demo ? () => true : auth.can
+  const catalog = useCatalog()
+  const live = !demo
   const [mode, setMode] = useState('select')
-  const [catId, setCatId] = useState(SAMPLE_CATALOG[0].id)
-  const [subId, setSubId] = useState(SAMPLE_CATALOG[0].subs[0].id)
+  const [catId, setCatId] = useState('')
+  const [subId, setSubId] = useState('')
+  const [scanKey, setScanKey] = useState(0)
   const [openItem, setOpenItem] = useState(null)
   const [lines, setLines] = useState([])
   const [sheet, setSheet] = useState(null) // null | 'cart' | 'done'
@@ -136,8 +141,32 @@ export default function SellPreview({ demo = false }) {
   const [error, setError] = useState('')
   const toastTimer = useRef(null)
 
-  const cat = SAMPLE_CATALOG.find((c) => c.id === catId)
-  const sub = cat.subs.find((s) => s.id === subId) || cat.subs[0]
+  // Real shop items when signed in; sample items on the public demo link.
+  // Shape: [{ category, subs: [{ sub, items: [{ item, variants }] }] }]
+  const { tree, entries } = useMemo(() => {
+    if (!live) return { tree: SAMPLE_CATALOG, entries: ALL_VARIANTS }
+    const tree = []
+    const entries = []
+    for (const c of catalog.categories) {
+      const subs = []
+      for (const sb of catalog.subsOf(c.id)) {
+        const items = catalog.items
+          .filter((i) => i.subId === sb.id && i.active !== false)
+          .map((i) => ({ ...i, variants: catalog.variantsOf(i.id).map((v) => ({ ...v, code: v.barcode })) }))
+          .filter((i) => i.variants.length > 0)
+          .sort((a, b) => (a.en || '').localeCompare(b.en || ''))
+        if (!items.length) continue
+        const subNode = { ...sb, items }
+        subs.push(subNode)
+        for (const item of items) for (const variant of item.variants) entries.push({ cat: c, sub: sb, item, variant })
+      }
+      if (subs.length) tree.push({ ...c, subs })
+    }
+    return { tree, entries }
+  }, [live, catalog])
+
+  const cat = tree.find((c) => c.id === catId) || tree[0]
+  const sub = cat ? cat.subs.find((s) => s.id === subId) || cat.subs[0] : null
 
   const count = lines.reduce((n, l) => n + l.qty, 0)
   const subtotal = lines.reduce((n, l) => n + l.qty * l.item.price, 0)
@@ -184,6 +213,14 @@ export default function SellPreview({ demo = false }) {
     add(pick1.item, pick1.variant)
   }
 
+  // real camera: find the scanned barcode, add it, then get ready for the next one
+  function onScanned(code) {
+    const hit = entries.find((e) => e.variant.code && e.variant.code === code)
+    if (hit) add(hit.item, hit.variant)
+    else showToast(`${t('barcodeNotFound')}: ${code}`)
+    setTimeout(() => setScanKey((k) => k + 1), 900)
+  }
+
   function complete() {
     setError('')
     if (pay !== 'cash' && !customerId) return setError(t('chooseCustomer'))
@@ -215,12 +252,12 @@ export default function SellPreview({ demo = false }) {
 
       <main className="mx-auto max-w-3xl px-4 pt-4">
         <div className="mb-4">
-          <Notice type="warn">{t('demoNotice')}</Notice>
+          <Notice type="warn">{live ? t('liveNotice') : t('demoNotice')}</Notice>
         </div>
 
         {/* 0. Search — type full or part of a name, colour or barcode */}
         <div className="mb-4">
-          <ProductSearch entries={ALL_VARIANTS} qtyOf={qtyOf} onAdd={add} />
+          <ProductSearch entries={entries} qtyOf={qtyOf} onAdd={add} />
         </div>
 
         {/* 1. Scan / Select */}
@@ -234,7 +271,14 @@ export default function SellPreview({ demo = false }) {
           ]}
         />
 
-        {mode === 'scan' && (
+        {mode === 'scan' && live && (
+          <div className="mx-auto mt-5 max-w-md">
+            <Viewfinder key={scanKey} compact onResult={onScanned} onError={() => showToast(t('cameraFailed'))} />
+            <p className="mt-3 text-sm text-muted">{t('scanTip')}</p>
+          </div>
+        )}
+
+        {mode === 'scan' && !live && (
           <div className="mt-5">
             <div className="relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-3xl bg-charcoal">
               {/* corner marks */}
@@ -254,12 +298,22 @@ export default function SellPreview({ demo = false }) {
           </div>
         )}
 
-        {mode === 'select' && (
+        {mode === 'select' && live && !catalog.ready && (
+          <div className="flex justify-center py-12">
+            <Spinner />
+          </div>
+        )}
+
+        {mode === 'select' && live && catalog.ready && tree.length === 0 && (
+          <EmptyState icon="package" title={t('noItems')} body={t('noItemsToSell')} />
+        )}
+
+        {mode === 'select' && cat && (
           <div className="mt-5">
             {/* 2. Main categories — rectangular tabs */}
             <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="tablist" aria-label={t('categories')}>
-              {SAMPLE_CATALOG.map((c) => {
-                const active = c.id === catId
+              {tree.map((c) => {
+                const active = c.id === cat.id
                 return (
                   <button
                     key={c.id}

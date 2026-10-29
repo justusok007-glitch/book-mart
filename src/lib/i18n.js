@@ -242,4 +242,7 @@ export const STRINGS = {
   arrange: { en: 'Arrange', ur: 'ترتیب' },
   holdInBox: { en: 'Hold the barcode inside the box', ur: 'بارکوڈ کو خانے کے اندر رکھیں' },
   torch: { en: 'Light', ur: 'لائٹ' },
+  liveNotice: { en: 'Your real items are shown. Sales are not saved and stock does not change until Phase 4.', ur: 'آپ کی اصل اشیاء دکھائی جا رہی ہیں۔ مرحلہ 4 تک فروخت محفوظ نہیں ہوگی اور اسٹاک نہیں بدلے گا۔' },
+  noItemsToSell: { en: 'Add items in Items & Stock (with a sub-category) and they will appear here.', ur: 'اشیاء و اسٹاک میں اشیاء (ذیلی کیٹیگری کے ساتھ) شامل کریں، وہ یہاں نظر آئیں گی۔' },
+  barcodeNotFound: { en: 'No item has this barcode', ur: 'اس بارکوڈ کی کوئی چیز نہیں' },
 }

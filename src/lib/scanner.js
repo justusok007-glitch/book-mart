@@ -40,19 +40,28 @@ async function zxingDetector() {
   const reader = new BrowserMultiFormatReader(hints)
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
-  let band = false
+  let pass = 0
   return async (video) => {
     const vw = video.videoWidth
     const vh = video.videoHeight
     if (!vw || !vh) return null
-    band = !band
-    // middle band = the box shown on screen; full frame every other try
-    const sh = band ? Math.round(vh * 0.5) : vh
-    const sy = band ? Math.round((vh - sh) / 2) : 0
-    const scale = Math.min(1, 1280 / vw)
-    canvas.width = Math.round(vw * scale)
+    pass = (pass + 1) % 3
+    // 0: middle band (the box on screen) · 1: zoomed centre (small/far barcodes) · 2: full frame
+    let sx = 0
+    let sw = vw
+    let sh = vh
+    if (pass === 0) sh = Math.round(vh * 0.5)
+    if (pass === 1) {
+      sw = Math.round(vw * 0.6)
+      sx = Math.round((vw - sw) / 2)
+      sh = Math.round(vh * 0.4)
+    }
+    const sy = Math.round((vh - sh) / 2)
+    const scale = Math.min(pass === 1 ? 2 : 1, 1280 / sw)
+    canvas.width = Math.round(sw * scale)
     canvas.height = Math.round(sh * scale)
-    ctx.drawImage(video, 0, sy, vw, sh, 0, 0, canvas.width, canvas.height)
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
     try {
       return reader.decodeFromCanvas(canvas).getText()
     } catch {

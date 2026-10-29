@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
+import { errorText } from '../lib/errors'
 import { BarcodeTakenError, generateBarcode, saveItem, useCatalog } from '../lib/catalog'
 import { COLOR_PRESETS, UNITS } from '../lib/colors'
 import { Button, Card, EmptyState, Field, IconButton, Notice, Page, Rs, Sheet, Spinner, Toggle } from '../components/ui'
@@ -216,7 +217,7 @@ export default function ItemForm() {
         const row = rows.find((r) => (r.barcode || '').trim() === e.barcode)
         if (row) setRowErrors({ [row.key]: { barcode: t('barcodeTaken') } })
         setError(`${t('barcodeTaken')} (${e.barcode})`)
-      } else setError(t('somethingWrong') + (e?.code ? ` (${e.code})` : ''))
+      } else setError(errorText(e, t))
     }
   }
 

@@ -5,6 +5,7 @@ import { useLang } from '../context/LangContext'
 import { useCatalog } from '../lib/catalog'
 import { recordPurchase, saveSupplier, useSuppliers } from '../lib/purchasing'
 import { round2 } from '../lib/costing'
+import { errorText } from '../lib/errors'
 import { Button, Card, EmptyState, Field, IconButton, MoneyInput, Notice, Page, Rs, Segmented, Sheet } from '../components/ui'
 import ProductSearch from '../components/ProductSearch'
 import BarcodeScanner from '../components/BarcodeScanner'
@@ -101,9 +102,8 @@ export default function Buy() {
     if (itemId && catalog.itemById[itemId]) catalog.variantsOf(itemId).forEach((v) => addLine(catalog.itemById[itemId], v, ''))
   }, [catalog.ready])
 
-  useEffect(() => {
-    if (!supplier && payType !== 'cash') setPayType('cash')
-  }, [supplier, payType])
+  const supplierBox = useRef(null)
+  const needSupplier = payType !== 'cash' && !supplier
 
   const update = (key, patch) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)))
   const remove = (key) => setLines((ls) => ls.filter((l) => l.key !== key))
@@ -166,7 +166,7 @@ export default function Buy() {
       })
       setDone(res)
     } catch (e) {
-      setError(t('somethingWrong') + (e?.code ? ` (${e.code})` : ''))
+      setError(errorText(e, t))
     }
     setBusy(false)
   }
@@ -196,7 +196,12 @@ export default function Buy() {
           <Card className="space-y-4 p-4">
             <Field label={t('supplier')}>
               <div className="flex gap-2">
-                <select className="field" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                <select
+                  ref={supplierBox}
+                  className={`field ${needSupplier ? 'border-warn' : ''}`}
+                  value={supplierId}
+                  onChange={(e) => setSupplierId(e.target.value)}
+                >
                   <option value="">{t('noSupplier')}</option>
                   {(suppliers || []).map((s) => (
                     <option key={s.id} value={s.id}>
@@ -304,11 +309,27 @@ export default function Buy() {
                   onChange={setPayType}
                   options={[
                     { value: 'cash', label: t('paidFull') },
-                    { value: 'partial', label: t('partial'), disabled: !supplier },
-                    { value: 'credit', label: t('onCredit'), disabled: !supplier },
+                    { value: 'partial', label: t('partial') },
+                    { value: 'credit', label: t('onCredit') },
                   ]}
                 />
-                {!supplier && <p className="mt-1.5 text-sm text-muted">{t('creditNeedsSupplier')}</p>}
+                {needSupplier && (
+                  <div className="mt-2">
+                    <Notice type="warn">
+                      {t('creditNeedsSupplier')}{' '}
+                      <button
+                        type="button"
+                        className="cursor-pointer font-semibold underline"
+                        onClick={() => {
+                          supplierBox.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          supplierBox.current?.focus()
+                        }}
+                      >
+                        {t('chooseSupplierNow')}
+                      </button>
+                    </Notice>
+                  </div>
+                )}
               </div>
               {payType === 'partial' && (
                 <Field label={t('paidNow')}>

@@ -271,7 +271,7 @@ export const STRINGS = {
   addItemsToBuy: { en: 'Add at least one item.', ur: 'کم از کم ایک چیز شامل کریں۔' },
   paidFull: { en: 'Paid in full', ur: 'پوری ادائیگی' },
   onCredit: { en: 'On credit', ur: 'ادھار' },
-  creditNeedsSupplier: { en: 'Choose a supplier to buy on credit.', ur: 'ادھار خریداری کے لیے سپلائر منتخب کریں۔' },
+  creditNeedsSupplier: { en: 'Part paid and credit need a supplier (so the app knows who you owe).', ur: 'کچھ ادائیگی اور ادھار کے لیے سپلائر ضروری ہے (تاکہ معلوم ہو کس کا قرض ہے)۔' },
   chooseSupplierForCredit: { en: 'Choose a supplier for a credit purchase.', ur: 'ادھار خریداری کے لیے سپلائر منتخب کریں۔' },
   buyNeedsInternet: { en: 'Saving a purchase needs internet (to work out the average cost correctly).', ur: 'خریداری محفوظ کرنے کے لیے انٹرنیٹ ضروری ہے (تاکہ اوسط قیمت درست نکلے)۔' },
   linesWord: { en: 'lines', ur: 'اشیاء' },
@@ -317,4 +317,6 @@ export const STRINGS = {
   adjustNote: { en: 'For damage, loss or counting mistakes. To add bought stock use Buy, so the cost is recorded.', ur: 'خرابی، گمشدگی یا گنتی کی غلطی کے لیے۔ خریدا ہوا مال "خریداری" سے شامل کریں تاکہ قیمت درج ہو۔' },
   saveAdjustment: { en: 'Save', ur: 'محفوظ کریں' },
   skippedNoQty: { en: 'No quantity — will be skipped', ur: 'تعداد نہیں — چھوڑ دیا جائے گا' },
+  chooseSupplierNow: { en: 'Choose supplier', ur: 'سپلائر منتخب کریں' },
+  permissionDenied: { en: 'The database refused this. Admin: publish the latest firestore.rules in Firebase (Firestore Database → Rules → Publish). Others: ask the admin for permission.', ur: 'ڈیٹا بیس نے اجازت نہیں دی۔ ایڈمن: Firebase میں تازہ firestore.rules شائع کریں۔ دیگر: ایڈمن سے اجازت لیں۔' },
 }

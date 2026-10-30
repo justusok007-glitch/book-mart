@@ -7,6 +7,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLang } from '../context/LangContext'
 import { Rs } from './ui'
 import Icon from './Icon'
+import { beepError, beepOk } from '../lib/beep'
 
 const norm = (s) => (s || '').toString().toLowerCase().normalize('NFKC').trim()
 const MAX = 8
@@ -101,7 +102,16 @@ export default function ProductSearch({ entries, qtyOf = {}, onAdd, stockOf = nu
       setActive((a) => Math.max(a - 1, 0))
     } else if (ev.key === 'Enter') {
       ev.preventDefault()
-      if (shown[active]) choose(shown[active])
+      // a USB/Bluetooth barcode scanner types the code and presses Enter: beep like the camera scanner
+      const exact = entries.find((e) => e.variant.code && norm(e.variant.code) === q)
+      if (exact) {
+        const ok = onAdd(exact.item, exact.variant)
+        if (ok === false) beepError()
+        else beepOk()
+        setQuery('')
+        inputRef.current?.focus()
+      } else if (/^\d{8,14}$/.test(q)) beepError()
+      else if (shown[active]) choose(shown[active])
     } else if (ev.key === 'Escape') {
       setOpen(false)
     }

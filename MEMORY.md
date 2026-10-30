@@ -98,6 +98,7 @@ src/
   lib/escpos.js         58mm ESC/POS receipt bytes, RawBT intent (rawbt:base64,… in APK / intent: in Chrome)
   lib/saleMath.js       saleTotals, dayKey, formatReceipt, nextLetter, makeReceiptNo (old style), returnValue
   lib/native.js         Capacitor Back button
+  lib/beep.js           scan sounds (Web Audio): beepOk (high beep + vibrate), beepError (two low beeps)
   pages/                one file per screen (Home, Login, SellPreview=Sell, Items, ItemDetail, ItemForm, Categories,
                         LowStock, Buy, Suppliers, SupplierDetail, Purchases, Sales, Returns, Customers, Expenses,
                         CashOut(+Summary), Investment, Closing, ProfitLoss, Reports, Users, Roles, Settings,
@@ -185,6 +186,9 @@ Always tell the client to publish after changing this file.
   Opening Stock, Low Stock — empty optional cell = "don't change"); inventory CSV download; reset data
   (inventory only / everything; users, roles, settings kept; safety backup first); per-user receipt letters;
   redesign (Rubik, charcoal app bar, Home counter, tiles).
+- Scan beep: every barcode scan beeps — camera (Sell, Buy, item form) and USB/Bluetooth keyboard scanners
+  (code + Enter in the search box). Sell/Buy beep only when the item is really added; not found / no stock →
+  low double beep. Viewfinder/BarcodeScanner take `beep={false}` when the screen beeps itself.
 
 ## 12. Open items / ideas
 

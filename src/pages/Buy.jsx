@@ -9,6 +9,7 @@ import { errorText } from '../lib/errors'
 import { Button, Card, EmptyState, Field, IconButton, MoneyInput, Notice, Page, Rs, Segmented, Sheet } from '../components/ui'
 import ProductSearch from '../components/ProductSearch'
 import BarcodeScanner from '../components/BarcodeScanner'
+import { beepError, beepOk } from '../lib/beep'
 import { Dot } from '../components/ItemBits'
 import Icon from '../components/Icon'
 
@@ -114,8 +115,11 @@ export default function Buy() {
 
   function onScanned(code) {
     const hit = entries.find((e) => e.variant.code === code)
-    if (hit) addLine(hit.item, hit.variant)
-    else {
+    if (hit) {
+      beepOk()
+      addLine(hit.item, hit.variant)
+    } else {
+      beepError()
       setToast(`${t('barcodeNotFound')}: ${code}`)
       setTimeout(() => setToast(''), 2500)
     }
@@ -368,7 +372,7 @@ export default function Buy() {
         </div>
       </div>
 
-      <BarcodeScanner open={scan} onClose={() => setScan(false)} onResult={onScanned} />
+      <BarcodeScanner open={scan} beep={false} onClose={() => setScan(false)} onResult={onScanned} />
 
       <Sheet open={newSup} title={t('newSupplier')} onClose={() => setNewSup(false)}>
         {newSup && (

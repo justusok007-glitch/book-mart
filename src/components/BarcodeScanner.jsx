@@ -3,24 +3,27 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useLang } from '../context/LangContext'
+import { beepOk, unlockAudio } from '../lib/beep'
 import { startScanner } from '../lib/scanner'
 import { Button, IconButton, Notice, Sheet, Spinner } from './ui'
 
-export function Viewfinder({ onResult, onError, compact = false }) {
+export function Viewfinder({ onResult, onError, compact = false, beep = true }) {
   const { t } = useLang()
   const video = useRef(null)
   const [starting, setStarting] = useState(true)
   const [torch, setTorch] = useState(null) // null = not supported
   const torchCtl = useRef(null)
   // keep latest callbacks without restarting the camera on every render
-  const cb = useRef({ onResult, onError })
-  cb.current = { onResult, onError }
+  const cb = useRef({ onResult, onError, beep })
+  cb.current = { onResult, onError, beep }
 
   useEffect(() => {
     let scanner = null
     let cancelled = false
+    unlockAudio()
     startScanner(video.current, (code) => {
-      if (navigator.vibrate) navigator.vibrate(60)
+      // the screen using the scanner can beep itself (e.g. Sell beeps only when the item is really added)
+      if (cb.current.beep) beepOk()
       cb.current.onResult(code)
     })
       .then((s) => {
@@ -75,7 +78,7 @@ export function Viewfinder({ onResult, onError, compact = false }) {
   )
 }
 
-export default function BarcodeScanner({ open, onClose, onResult }) {
+export default function BarcodeScanner({ open, onClose, onResult, beep = true }) {
   const { t } = useLang()
   const [error, setError] = useState('')
 
@@ -87,6 +90,7 @@ export default function BarcodeScanner({ open, onClose, onResult }) {
     <Sheet open={open} title={t('scanBarcode')} onClose={onClose}>
       {open && !error && (
         <Viewfinder
+          beep={beep}
           onResult={(code) => {
             onResult(code)
             onClose()

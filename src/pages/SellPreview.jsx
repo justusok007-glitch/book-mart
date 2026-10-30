@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { ALL_VARIANTS, SAMPLE_CATALOG, SAMPLE_CUSTOMERS } from '../lib/sampleCatalog'
 import { useCatalog } from '../lib/catalog'
 import { Viewfinder } from '../components/BarcodeScanner'
+import { beepError, beepOk } from '../lib/beep'
 import { Badge, Button, EmptyState, Field, IconButton, Notice, OfflineBanner, PageHeader, Rs, Sheet, Spinner } from '../components/ui'
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
@@ -185,7 +186,7 @@ export default function SellPreview({ demo = false }) {
     if (live && availableOf(variant.id) <= 0) {
       showToast(`${t('noMoreStock')}: ${pick(item)}${item.variants.length > 1 ? ' · ' + pick(variant) : ''}`)
       if (navigator.vibrate) navigator.vibrate([40, 60, 40])
-      return
+      return false
     }
     setLines((ls) => {
       const i = ls.findIndex((l) => l.key === variant.id)
@@ -194,6 +195,7 @@ export default function SellPreview({ demo = false }) {
     })
     setBump((b) => b + 1)
     showToast(`${t('added')}: ${pick(item)}${item.variants.length > 1 ? ' · ' + pick(variant) : ''}`)
+    return true
   }
 
   function changeQty(key, delta) {
@@ -213,7 +215,7 @@ export default function SellPreview({ demo = false }) {
 
   function simulateScan() {
     const pick1 = ALL_VARIANTS[Math.floor(Math.random() * ALL_VARIANTS.length)]
-    add(pick1.item, pick1.variant)
+    ;(add(pick1.item, pick1.variant) ? beepOk : beepError)()
   }
 
   // real camera: find the scanned barcode, add it, then get ready for the next one
@@ -226,8 +228,12 @@ export default function SellPreview({ demo = false }) {
     lastScan.current = { code, at: now }
     if (!repeat) {
       const hit = entries.find((e) => e.variant.code && e.variant.code === code)
-      if (hit) add(hit.item, hit.variant)
-      else showToast(`${t('barcodeNotFound')}: ${code}`)
+      // beep only when the item really went into the cart; low double beep if not found / no stock
+      if (hit) (add(hit.item, hit.variant) ? beepOk : beepError)()
+      else {
+        beepError()
+        showToast(`${t('barcodeNotFound')}: ${code}`)
+      }
     }
     setTimeout(() => setScanKey((k) => k + 1), repeat ? 600 : 1200)
   }
@@ -330,7 +336,7 @@ export default function SellPreview({ demo = false }) {
 
         {mode === 'scan' && live && (
           <div className="mx-auto mt-5 max-w-md">
-            <Viewfinder key={scanKey} compact onResult={onScanned} onError={() => showToast(t('cameraFailed'))} />
+            <Viewfinder key={scanKey} compact beep={false} onResult={onScanned} onError={() => showToast(t('cameraFailed'))} />
             <p className="mt-3 text-sm text-muted">{t('scanTip')}</p>
           </div>
         )}

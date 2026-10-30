@@ -269,7 +269,7 @@ function StockReport() {
       </Card>
       {showCost && r.total.cost > 0 && (
         <Card className="px-4">
-          <Row label={t('expectedMargin')} value={r.total.retail - r.total.cost} sub={t('expectedMarginNote')} />
+          <Row label={t('expectedMargin')} value={r.total.margin} sub={t('expectedMarginNote')} />
         </Card>
       )}
       {showCost && r.missingCost && <p className="text-sm text-muted">{t('stockCostMissing')}</p>}

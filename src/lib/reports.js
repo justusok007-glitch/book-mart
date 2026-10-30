@@ -136,18 +136,26 @@ export function stockByCategory({ categories, items, variants, itemById, costs, 
     else if ((v.stock || 0) <= (item.lowStock ?? 0)) lowCount++
     const cat = catById[item.catId]
     const key = cat?.id || '_'
-    m[key] ||= { id: key, en: cat?.en || '—', ur: cat?.ur || '—', order: cat?.order ?? 999, units: 0, cost: 0, retail: 0 }
+    m[key] ||= { id: key, en: cat?.en || '—', ur: cat?.ur || '—', order: cat?.order ?? 999, units: 0, cost: 0, retail: 0, retailKnown: 0 }
     const r = m[key]
     r.units += stock
     r.retail += stock * (Number(item.price) || 0)
     const c = costs[v.itemId]?.avgCost
     if (c == null) {
       if (stock > 0) missingCost = true
-    } else r.cost += stock * c
+    } else {
+      r.cost += stock * c
+      r.retailKnown += stock * (Number(item.price) || 0)
+    }
   }
   const rows = Object.values(m)
     .map((r) => ({ ...r, cost: Math.round(r.cost), retail: Math.round(r.retail) }))
     .sort((a, b) => a.order - b.order)
-  const total = rows.reduce((t, r) => ({ units: t.units + r.units, cost: t.cost + r.cost, retail: t.retail + r.retail }), { units: 0, cost: 0, retail: 0 })
+  const total = rows.reduce(
+    (t, r) => ({ units: t.units + r.units, cost: t.cost + r.cost, retail: t.retail + r.retail, retailKnown: t.retailKnown + r.retailKnown }),
+    { units: 0, cost: 0, retail: 0, retailKnown: 0 },
+  )
+  // margin only over items whose cost is known
+  total.margin = Math.round(total.retailKnown - total.cost)
   return { rows, total, lowCount, outCount, missingCost, itemCount: items.filter((i) => i.active !== false).length, catCount: categories.length }
 }

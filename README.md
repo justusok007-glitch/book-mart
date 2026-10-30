@@ -31,8 +31,7 @@ The previous design (before the Oct 2026 redesign) is kept on branch `design-v1`
 Every push builds `book-mart.apk` and puts it on the Releases page:
 https://github.com/justusok007-glitch/book-mart/releases/download/apk-latest/book-mart.apk
 
-Signing: add repository secrets `ANDROID_KEYSTORE_B64` and `ANDROID_KEYSTORE_PASS` for a permanent key. Without them the
-workflow makes a key once and keeps it in the Actions cache (if that cache expires, uninstall the old app once before installing).
+Signing: the permanent key comes from repository secrets `ANDROID_KEYSTORE_B64` and `ANDROID_KEYSTORE_PASS` (build fails without them).
 
 ## Printing
 Settings → Receipt printer → "Print directly with RawBT": Print sends an ESC/POS receipt (58mm, 32 columns) to the RawBT app,

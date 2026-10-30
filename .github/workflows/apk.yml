@@ -47,28 +47,20 @@ jobs:
       - run: npx cap sync android
 
       # The same signing key must be used for every build, otherwise a new APK will not
-      # install over the old one. Preferred: repository secrets ANDROID_KEYSTORE_B64 + ANDROID_KEYSTORE_PASS.
-      # Without them a key is made once and kept in the Actions cache.
-      - name: Signing key from cache
-        uses: actions/cache@v4
-        with:
-          path: keystore
-          key: bookmart-release-keystore-v1
+      # install over the old one. It comes from the repository secrets ANDROID_KEYSTORE_B64 + ANDROID_KEYSTORE_PASS.
       - name: Signing key
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
         run: |
-          mkdir -p keystore
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > keystore/release.jks
-            echo "${KEYSTORE_PASS}" > keystore/pass
-          elif [ ! -f keystore/release.jks ]; then
-            PASS=$(openssl rand -hex 16)
-            echo "$PASS" > keystore/pass
-            keytool -genkeypair -keystore keystore/release.jks -alias bookmart -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass "$PASS" -keypass "$PASS" -dname "CN=Book Mart, O=Book Mart, L=Okara, C=PK"
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASS" ]; then
+            echo "::error::Add the repository secrets ANDROID_KEYSTORE_B64 and ANDROID_KEYSTORE_PASS (Settings → Secrets and variables → Actions)."
+            exit 1
           fi
+          mkdir -p keystore
+          echo "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > keystore/release.jks
+          printf '%s' "$KEYSTORE_PASS" | tr -d ' \r\n' > keystore/pass
+          keytool -list -keystore keystore/release.jks -storepass "$(cat keystore/pass)" > /dev/null || { echo "::error::The keystore secret or its password is wrong."; exit 1; }
 
       - name: Build
         run: cd android && ./gradlew assembleRelease --no-daemon -q
@@ -79,7 +71,8 @@ jobs:
           PASS=$(cat keystore/pass)
           "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
           "$BT/apksigner" sign --ks keystore/release.jks --ks-pass "pass:$PASS" --key-pass "pass:$PASS" --out book-mart.apk aligned.apk
-          "$BT/apksigner" verify book-mart.apk
+          "$BT/apksigner" verify --print-certs book-mart.apk | grep -i "sha-256" | tee cert.txt
+          echo "::notice::Signed with $(cat cert.txt)"
           ls -la book-mart.apk
 
       - uses: actions/upload-artifact@v4

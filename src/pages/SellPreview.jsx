@@ -13,7 +13,7 @@ import { Badge, Button, EmptyState, Field, IconButton, Notice, OfflineBanner, Pa
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
 import ProductSearch from '../components/ProductSearch'
-import { recordSale, saveCustomer, useCustomers, useShopSettings } from '../lib/selling'
+import { recordSale, saveCustomer, useCustomers, useReceiptCounter, useShopSettings } from '../lib/selling'
 import { saleTotals, makeReceiptNo } from '../lib/saleMath'
 import { printReceipt, ReceiptView, shareReceipt } from '../components/Receipt'
 import { errorText } from '../lib/errors'
@@ -109,6 +109,7 @@ export default function SellPreview({ demo = false }) {
   const can = demo ? () => true : auth.can
   const catalog = useCatalog()
   const live = !demo
+  useReceiptCounter(live ? auth?.user?.uid : null)
   const [mode, setMode] = useState('select')
   const [catId, setCatId] = useState('')
   const [subId, setSubId] = useState('')
@@ -255,7 +256,7 @@ export default function SellPreview({ demo = false }) {
       paidInput,
       customer: pay !== 'cash' ? customer : null,
       costs: catalog.costs,
-      user: { uid: auth.user.uid, name: auth.displayName },
+      user: { uid: auth.user.uid, name: auth.displayName, letter: auth.profile?.receiptLetter || null },
       onFail: (e, s) => setFailed((f) => [...f, { receiptNo: s.receiptNo, total: s.total, msg: errorText(e, t) }]),
     })
     setDoneSale(sale)

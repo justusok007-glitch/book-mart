@@ -9,7 +9,7 @@
 import { collection, doc, getDocs, increment, limit, orderBy, query, serverTimestamp, where, writeBatch } from 'firebase/firestore'
 import { db } from './firebase'
 import { round2 } from './costing'
-import { dayKey, returnValue } from './saleMath'
+import { dayKey, formatReceipt, returnValue } from './saleMath'
 
 /* ================= udhaar payments ================= */
 
@@ -59,26 +59,32 @@ export function waNumber(phone = '') {
 /* ================= returns ================= */
 
 /**
- * Find sales by receipt number: the whole number (261030-7K3F) or just its last 4 characters (7K3F).
- * Returns a list, newest first (two old receipts can share the same last 4).
+ * Find sales by receipt number. Accepts:
+ *   A00125 / a125  → that user's receipt        125 → receipt 125 of every user (pick one)
+ *   261030-7K3F / 7K3F → old-style receipts (whole number or last 4 characters)
+ * Returns a list, newest first.
  */
 export async function findSalesByReceipt(input) {
   const code = String(input || '').toUpperCase().replace(/[#\s]/g, '')
   if (!code) return []
-  const full = /^\d{6}-[A-Z0-9]{4}$/.test(code)
   const found = new Map()
   const add = (snap) => snap.docs.forEach((d) => found.set(d.id, { id: d.id, ...d.data() }))
-  if (full) add(await getDocs(query(collection(db, 'sales'), where('receiptNo', '==', code), limit(5))))
-  else {
+  const sales = collection(db, 'sales')
+
+  const series = code.match(/^([A-Z]{1,2})0*(\d{1,7})$/)
+  if (series) add(await getDocs(query(sales, where('receiptNo', '==', formatReceipt(series[1], Number(series[2]))), limit(5))))
+  if (/^\d{1,7}$/.test(code)) add(await getDocs(query(sales, where('receiptSeq', '==', Number(code)), limit(20))))
+
+  if (/^\d{6}-[A-Z0-9]{4}$/.test(code)) add(await getDocs(query(sales, where('receiptNo', '==', code), limit(5))))
+  else if (code.length <= 5 && /^[A-Z0-9]+$/.test(code.slice(-4)) && code.slice(-4).length === 4) {
+    // old style: last 4 characters
     const short = code.slice(-4)
-    add(await getDocs(query(collection(db, 'sales'), where('receiptShort', '==', short), limit(20))))
-    // sales made before the short code was stored: look through the last 6 months
-    const from = dayKey(new Date(Date.now() - 183 * 864e5))
-    const older = await getDocs(query(collection(db, 'sales'), where('day', '>=', from)))
-    older.docs.forEach((d) => {
-      const r = d.data().receiptNo || ''
-      if (r.endsWith(short) && (code.length <= 4 || r.endsWith(code))) found.set(d.id, { id: d.id, ...d.data() })
-    })
+    add(await getDocs(query(sales, where('receiptShort', '==', short), limit(20))))
+    if (!found.size) {
+      const from = dayKey(new Date(Date.now() - 183 * 864e5))
+      const older = await getDocs(query(sales, where('day', '>=', from)))
+      older.docs.forEach((d) => (d.data().receiptNo || '').endsWith('-' + short) && found.set(d.id, { id: d.id, ...d.data() }))
+    }
   }
   return [...found.values()].sort((a, b) => (b.clientAt || 0) - (a.clientAt || 0))
 }

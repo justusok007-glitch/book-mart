@@ -7,6 +7,7 @@ import { useLang } from '../context/LangContext'
 import { Badge, Button, Card, EmptyState, Field, Notice, Page, Sheet, Toggle } from '../components/ui'
 import Icon from '../components/Icon'
 import { errorText } from '../lib/errors'
+import { formatReceipt, LETTER_RE, nextLetter } from '../lib/saleMath'
 
 export function useRoles() {
   const [roles, setRoles] = useState([])
@@ -26,7 +27,7 @@ export function useRoles() {
 
 const USERNAME_RE = /^[a-z0-9._-]{3,30}$/
 
-function UserForm({ initial, roles, onDone }) {
+function UserForm({ initial, roles, users = [], onDone }) {
   const { t, pick } = useLang()
   const { user: me, isAdmin } = useAuth()
   const isNew = !initial
@@ -36,6 +37,8 @@ function UserForm({ initial, roles, onDone }) {
   const [phone, setPhone] = useState(initial?.phone || '')
   const [roleId, setRoleId] = useState(initial?.roleId || roles[0]?.id || '')
   const [active, setActive] = useState(initial ? initial.active !== false : true)
+  const others = users.filter((u) => u.id !== initial?.id).map((u) => u.receiptLetter).filter(Boolean)
+  const [letter, setLetter] = useState(initial?.receiptLetter || nextLetter(others) || '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -47,6 +50,8 @@ function UserForm({ initial, roles, onDone }) {
     if (isNew && !USERNAME_RE.test(uname)) return setError(t('usernameInvalid'))
     if (isNew && password.length < 6) return setError(t('passwordShort'))
     if (!navigator.onLine) return setError(t('needsInternet'))
+    if (!LETTER_RE.test(letter)) return setError(t('letterInvalid'))
+    if (others.includes(letter)) return setError(t('letterTaken'))
 
     setBusy(true)
     try {
@@ -61,6 +66,7 @@ function UserForm({ initial, roles, onDone }) {
           phone: phone.trim(),
           roleId,
           active: true,
+          receiptLetter: letter,
           createdAt: serverTimestamp(),
           createdBy: me.uid,
         })
@@ -71,6 +77,7 @@ function UserForm({ initial, roles, onDone }) {
           phone: phone.trim(),
           roleId,
           active,
+          receiptLetter: letter,
           updatedAt: serverTimestamp(),
           updatedBy: me.uid,
         })
@@ -118,6 +125,16 @@ function UserForm({ initial, roles, onDone }) {
       </Field>
       <Field label={`${t('phone')} (${t('optional')})`}>
         <input className="field latin" dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      </Field>
+      <Field label={t('receiptLetter')} hint={`${t('receiptLetterHint')} ${letter ? formatReceipt(letter, 1) + ', ' + formatReceipt(letter, 2) + '…' : ''}`}>
+        <input
+          className="field latin w-28 text-center text-lg font-bold uppercase"
+          dir="ltr"
+          maxLength={2}
+          autoCapitalize="characters"
+          value={letter}
+          onChange={(e) => setLetter(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))}
+        />
       </Field>
       {!isNew && (
         <div className="flex items-center justify-between rounded-xl border border-line bg-white ps-4 pe-1">
@@ -197,7 +214,10 @@ export default function Users() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold">{u.name}</div>
-              <div className="text-sm text-muted">{t('lockedAdmin')}</div>
+              <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted">
+                {t('lockedAdmin')}
+                {u.receiptLetter && <Badge><span className="latin">{formatReceipt(u.receiptLetter, 1)}…</span></Badge>}
+              </div>
             </div>
             <Icon name="lock" size={18} className="text-muted" />
           </Card>
@@ -242,6 +262,7 @@ export default function Users() {
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                   <span className="latin text-sm text-muted" dir="ltr">@{u.username}</span>
                   <Badge tone="lime">{roleName(u.roleId)}</Badge>
+                  {u.receiptLetter && <Badge><span className="latin">{formatReceipt(u.receiptLetter, 1)}…</span></Badge>}
                   {off && <Badge tone="danger">{t('inactive')}</Badge>}
                 </div>
               </div>
@@ -257,6 +278,7 @@ export default function Users() {
             key={editing === 'new' ? 'new' : editing.id}
             initial={editing === 'new' ? null : editing}
             roles={roles}
+            users={users || []}
             onDone={() => setEditing(null)}
           />
         )}

@@ -19,7 +19,7 @@ import { buildCatalog, CatalogContext } from '../lib/catalog'
 
 const fakeAuth = {
   user: { uid: 'admin', email: 'admin@example.com' },
-  profile: { name: 'Admin', roleId: 'admin', active: true },
+  profile: { name: 'Admin', roleId: 'admin', active: true, receiptLetter: 'A' },
   role: null,
   isAdmin: true,
   can: () => true,

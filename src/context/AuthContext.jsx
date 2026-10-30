@@ -1,12 +1,32 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import { doc, getDoc, onSnapshot, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, onSnapshot, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore'
 import { auth, db, isAdminEmail, usernameToEmail } from '../lib/firebase'
 import { ADMIN_ONLY, DEFAULT_ROLES } from '../lib/permissions'
+import { nextLetter } from '../lib/saleMath'
 
 export const AuthContext = createContext(null)
 
 // First time the developer admin logs in: create the admin profile and the default roles.
+// Every user gets a fixed receipt letter (A, B, C…) for their receipt series A00001, A00002…
+export async function assignReceiptLetters() {
+  const snap = await getDocs(collection(db, 'users'))
+  const users = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  const used = users.map((u) => u.receiptLetter).filter(Boolean)
+  // admin first, then staff in the order they were added
+  const missing = users
+    .filter((u) => !u.receiptLetter)
+    .sort((a, b) => (a.roleId === 'admin' ? -1 : b.roleId === 'admin' ? 1 : (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0)))
+  if (!missing.length) return
+  const batch = writeBatch(db)
+  for (const u of missing) {
+    const letter = nextLetter(used)
+    used.push(letter)
+    batch.update(doc(db, 'users', u.id), { receiptLetter: letter })
+  }
+  await batch.commit()
+}
+
 async function bootstrapAdmin(u) {
   try {
     const ref = doc(db, 'users', u.uid)
@@ -30,6 +50,7 @@ async function bootstrapAdmin(u) {
       batch.set(doc(db, 'meta', 'setup'), { rolesSeeded: true, at: serverTimestamp() })
       await batch.commit()
     }
+    await assignReceiptLetters()
   } catch (e) {
     // Offline on first run, or rules not published yet — try again next login
     console.warn('Admin setup skipped:', e?.code || e)

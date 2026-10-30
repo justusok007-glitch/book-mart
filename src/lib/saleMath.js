@@ -25,7 +25,23 @@ export function dayKey(d = new Date()) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
-// Receipt no. that is unique without needing internet: 261029-7K3F
+// Receipt number for a user's own series: A + 5 digits → A00001
+export function formatReceipt(letter, n) {
+  return `${letter}${String(n).padStart(5, '0')}`
+}
+
+// Next free series letter: A…Z, then AA, AB…
+export function nextLetter(used) {
+  const taken = new Set([...used].map((x) => String(x || '').toUpperCase()))
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  for (const a of A) if (!taken.has(a)) return a
+  for (const a of A) for (const b of A) if (!taken.has(a + b)) return a + b
+  return null
+}
+
+export const LETTER_RE = /^[A-Z]{1,2}$/
+
+// Old receipt style (still used when a user has no letter yet): unique without internet: 261029-7K3F
 export function makeReceiptNo(d = new Date()) {
   const p = (n) => String(n).padStart(2, '0')
   const rnd = Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, '0')

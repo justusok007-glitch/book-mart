@@ -23,7 +23,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { dayKey, makeReceiptNo, saleTotals } from './saleMath'
+import { dayKey, formatReceipt, makeReceiptNo, saleTotals } from './saleMath'
 
 /* ================= shop details (for receipts) ================= */
 
@@ -67,6 +67,44 @@ export function saveCustomer({ id, name, phone = '', address = '', note = '' }) 
   return ref.id
 }
 
+/* ================= receipt numbers: each user has a letter and counts 00001, 00002… ================= */
+// The count is kept on the phone (works offline) and copied online (receiptCounters/{uid}),
+// so a reinstalled app or a new phone carries on from the last number.
+
+const serverLast = {}
+const localKey = (uid) => `bm-receipt-${uid}`
+function localLast(uid) {
+  try {
+    return Number(localStorage.getItem(localKey(uid))) || 0
+  } catch {
+    return 0
+  }
+}
+
+export function useReceiptCounter(uid) {
+  useEffect(() => {
+    if (!uid) return
+    return onSnapshot(
+      doc(db, 'receiptCounters', uid),
+      (s) => {
+        if (s.exists()) serverLast[uid] = Math.max(serverLast[uid] || 0, Number(s.data().last) || 0)
+      },
+      () => {},
+    )
+  }, [uid])
+}
+
+function takeReceiptNumber(user) {
+  const n = Math.max(localLast(user.uid), serverLast[user.uid] || 0) + 1
+  try {
+    localStorage.setItem(localKey(user.uid), String(n))
+  } catch {
+    /* ignore */
+  }
+  serverLast[user.uid] = n
+  return n
+}
+
 /* ================= save a sale ================= */
 
 /**
@@ -91,10 +129,12 @@ export function recordSale({ cartLines, discount, payType, paidInput, customer, 
   const now = new Date()
   const day = dayKey(now)
   const ref = doc(collection(db, 'sales'))
-  const receiptNo = makeReceiptNo(now)
+  // user's own series (A00001…); old random style only if the Admin hasn't given this user a letter yet
+  const seq = user.letter ? takeReceiptNumber(user) : null
+  const receiptNo = seq ? formatReceipt(user.letter, seq) : makeReceiptNo(now)
   const sale = {
     receiptNo,
-    receiptShort: receiptNo.slice(-4), // last 4 characters: enough to find the sale for a return
+    ...(seq ? { receiptSeries: user.letter, receiptSeq: seq } : { receiptShort: receiptNo.slice(-4) }),
     day,
     lines,
     ...totals,
@@ -109,6 +149,7 @@ export function recordSale({ cartLines, discount, payType, paidInput, customer, 
   const batch = writeBatch(db)
   const stamp = serverTimestamp()
   batch.set(ref, { ...sale, at: stamp })
+  if (seq) batch.set(doc(db, 'receiptCounters', user.uid), { last: seq, letter: user.letter, updatedAt: stamp }, { merge: true })
 
   for (const l of lines) {
     batch.update(doc(db, 'variants', l.variantId), { stock: increment(-l.qty) })

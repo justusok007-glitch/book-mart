@@ -163,7 +163,7 @@ export default function Returns() {
                   className="field latin text-lg uppercase"
                   dir="ltr"
                   autoCapitalize="characters"
-                  placeholder="7K3F"
+                  placeholder="A00125"
                   value={code}
                   onChange={(e) => {
                     setCode(e.target.value)

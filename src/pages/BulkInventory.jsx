@@ -137,7 +137,7 @@ function Upload() {
             <Notice type="info">
               {t('newCategoriesMade')}{' '}
               {plan.newCats
-                .map((c) => (c.cat ? '' : c.en) + (c.subs.size ? ` (${[...c.subs.values()].join(', ')})` : ''))
+                .map((c) => `${c.cat ? c.cat.en : c.en}${c.subs.size ? ' › ' + [...c.subs.values()].join(', ') : ''}`)
                 .join('; ')}
             </Notice>
           )}

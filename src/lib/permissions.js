@@ -65,7 +65,7 @@ export const PERMISSION_GROUPS = [
 ]
 
 // These can never be given to a role — Admin only.
-export const ADMIN_ONLY = ['manage_roles', 'backup_restore']
+export const ADMIN_ONLY = ['manage_roles', 'backup_restore', 'bulk_inventory']
 
 export const ALL_PERMISSIONS = PERMISSION_GROUPS.flatMap((g) => g.perms.map((p) => p.key))
 
@@ -130,6 +130,7 @@ export const FEATURES = [
 
   { key: 'users', group: 'admin', perm: 'manage_users', icon: 'users', en: 'Users', ur: 'صارفین', ready: true, path: '/users' },
   { key: 'roles', group: 'admin', perm: 'manage_roles', icon: 'shield', en: 'Roles & Permissions', ur: 'عہدے اور اختیارات', ready: true, path: '/roles' },
+  { key: 'bulk-inventory', group: 'admin', perm: 'bulk_inventory', icon: 'package', en: 'Bulk Inventory', ur: 'بلک انوینٹری', ready: true, path: '/bulk-inventory' },
   { key: 'backup', group: 'admin', perm: 'backup_restore', icon: 'lock', en: 'Backup & Restore', ur: 'بیک اپ اور بحالی', ready: true, path: '/backup' },
   { key: 'settings', group: 'admin', perm: null, icon: 'sliders', en: 'Settings', ur: 'ترتیبات', ready: true, path: '/settings' },
 ]

@@ -6,6 +6,8 @@ import { errorText } from '../lib/errors'
 import { fmtDate } from '../lib/format'
 import { Button, Card, Field, Notice, Page, SectionTitle, useOnline } from '../components/ui'
 import Icon from '../components/Icon'
+import { useCatalog } from '../lib/catalog'
+import { downloadText, inventoryCsv, inventoryFileName } from '../lib/inventoryCsv'
 
 function Progress({ value, label }) {
   return (
@@ -32,6 +34,7 @@ export default function Backup() {
   const [file, setFile] = useState(null) // { name, data, info }
   const [confirm, setConfirm] = useState('')
   const input = useRef(null)
+  const catalog = useCatalog()
 
   useEffect(() => {
     fetchLastBackup()
@@ -139,6 +142,17 @@ export default function Backup() {
                 </Button>
               </div>
             )}
+          </Card>
+        </section>
+
+        {/* inventory as a spreadsheet */}
+        <section>
+          <SectionTitle>{t('inventoryCsv')}</SectionTitle>
+          <Card className="space-y-3 p-4">
+            <p className="text-sm text-muted">{t('inventoryCsvHint')}</p>
+            <Button variant="secondary" size="lg" className="w-full" disabled={!catalog.ready} onClick={() => downloadText(inventoryCsv(catalog), inventoryFileName())}>
+              <Icon name="package" size={20} /> {t('downloadInventoryCsv')} <span className="latin">({catalog.items.length})</span>
+            </Button>
           </Card>
         </section>
 

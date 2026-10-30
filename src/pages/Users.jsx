@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth'
-import { collection, doc, onSnapshot, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { db, getSecondaryAuth, usernameToEmail } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
 import { Badge, Button, Card, EmptyState, Field, Notice, Page, Sheet, Toggle } from '../components/ui'
 import Icon from '../components/Icon'
+import { errorText } from '../lib/errors'
 
 export function useRoles() {
   const [roles, setRoles] = useState([])
@@ -27,7 +28,7 @@ const USERNAME_RE = /^[a-z0-9._-]{3,30}$/
 
 function UserForm({ initial, roles, onDone }) {
   const { t, pick } = useLang()
-  const { user: me } = useAuth()
+  const { user: me, isAdmin } = useAuth()
   const isNew = !initial
   const [name, setName] = useState(initial?.name || '')
   const [username, setUsername] = useState(initial?.username || '')
@@ -129,6 +130,29 @@ function UserForm({ initial, roles, onDone }) {
       <Button type="submit" size="lg" className="w-full" disabled={busy}>
         {busy ? t('saving') : t('save')}
       </Button>
+      {!isNew && isAdmin && initial.id !== me.uid && (
+        <Button
+          type="button"
+          variant="danger"
+          size="lg"
+          className="w-full"
+          disabled={busy}
+          onClick={async () => {
+            if (!window.confirm(`${t('confirmDeleteUser')}\n\n${initial.name} (@${initial.username})`)) return
+            if (!navigator.onLine) return setError(t('needsInternet'))
+            setBusy(true)
+            try {
+              await deleteDoc(doc(db, 'users', initial.id))
+              onDone(t('userDeleted'))
+            } catch (err) {
+              setError(errorText(err, t))
+              setBusy(false)
+            }
+          }}
+        >
+          <Icon name="trash" size={20} /> {t('deleteUser')}
+        </Button>
+      )}
     </form>
   )
 }

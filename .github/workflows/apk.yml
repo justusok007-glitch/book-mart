@@ -3,9 +3,8 @@ name: Android APK
 # Builds the Android app from the same code as the web preview and puts it on the
 # Releases page: https://github.com/<owner>/book-mart/releases/tag/apk-latest
 
+# Built only when started by hand (Actions → Android APK → Run workflow), after the preview is checked.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

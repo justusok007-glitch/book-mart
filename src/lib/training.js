@@ -18,7 +18,8 @@ import {
   connectFirestoreEmulator,
   disableNetwork,
   doc,
-  getDocs,
+  getDocsFromCache,
+  getDocsFromServer,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
@@ -69,11 +70,14 @@ async function seed(pdb, onProgress) {
   let n = 0
   let i = 0
   for (const name of SEED_COLLECTIONS) {
-    let snap
+    let snap = null
+    const ref = collection(realDb, name)
     try {
-      snap = await getDocs(collection(realDb, name))
-    } catch {
-      snap = null // this trainee may not read it — skip
+      // fresh from the shop; if the line is slow, use what this phone already has
+      snap = await Promise.race([getDocsFromServer(ref), new Promise((_, no) => setTimeout(() => no(new Error('slow')), 15000))])
+    } catch (e) {
+      if (e?.code === 'permission-denied') snap = null // this trainee may not read it — skip
+      else snap = await getDocsFromCache(ref).catch(() => null)
     }
     if (snap) {
       const docs = snap.docs

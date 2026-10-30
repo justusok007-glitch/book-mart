@@ -20,6 +20,7 @@ export function Button({ variant = 'primary', size = 'md', className = '', child
   }
   return (
     <button
+      data-variant={variant}
       className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-45 ${styles[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
@@ -36,7 +37,7 @@ export function IconButton({ icon, label, onClick, className = '', iconClass = '
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={`inline-flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-150 hover:bg-paper active:bg-line ${className}`}
+      className={`icon-btn inline-flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-150 hover:bg-paper active:bg-line ${className}`}
     >
       <Icon name={icon} size={size} className={iconClass} />
     </button>
@@ -125,8 +126,8 @@ export function Badge({ tone = 'neutral', children }) {
 
 export function SectionTitle({ children, action }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-2">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{children}</h2>
+    <div className="mb-2.5 flex items-center justify-between gap-2 px-1">
+      <h2 className="text-[15px] font-semibold text-charcoal">{children}</h2>
       {action}
     </div>
   )
@@ -203,14 +204,16 @@ export function PageHeader({ title, back = true, right }) {
   const navigate = useNavigate()
   const { t } = useLang()
   return (
-    <header className="safe-top sticky top-0 z-30 border-b border-line bg-white">
+    <header className="app-bar safe-top sticky top-0 z-30 bg-charcoal">
       <div className="mx-auto flex h-16 max-w-3xl items-center gap-1 px-2">
         {back ? (
-          <IconButton icon="back" label={t('back')} onClick={() => navigate(-1)} className="text-charcoal" iconClass="rtl:rotate-180" />
+          <IconButton icon="back" label={t('back')} onClick={() => navigate(-1)} iconClass="rtl:rotate-180" />
         ) : (
-          <img src="./logo-mark.png" alt="" className="mx-2 h-9 w-9 object-contain" />
+          <span className="mx-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-white">
+            <img src="./logo-mark.png" alt="" className="h-8 w-8 object-contain" />
+          </span>
         )}
-        <h1 className="flex-1 truncate px-1 text-lg font-bold text-charcoal">{title}</h1>
+        <h1 className="flex-1 truncate px-1 text-lg font-semibold text-white">{title}</h1>
         {right}
       </div>
     </header>

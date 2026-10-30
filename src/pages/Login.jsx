@@ -53,20 +53,23 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-paper">
       <OfflineBanner />
-      <div className="safe-top flex justify-end px-4 pt-4">
-        <LangSwitch />
+      <div className="app-bar safe-top bg-charcoal pb-16">
+        <div className="flex justify-end px-4 pt-4">
+          <LangSwitch />
+        </div>
+        <div className="mx-auto mt-1 flex max-w-sm flex-col items-center px-6 text-center">
+          <div className="rounded-3xl bg-white px-6 py-4">
+            <img src="./logo.png" alt="Book Mart" className="h-auto w-40" />
+          </div>
+          <p className="mt-3 text-white/75">{t('tagline')}</p>
+        </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pb-10">
-        <div className="mb-8 mt-4 flex flex-col items-center text-center">
-          <img src="./logo.png" alt="Book Mart" className="h-auto w-44" />
-          <p className="mt-3 text-muted">{t('tagline')}</p>
-        </div>
-
-        <form onSubmit={submit} className="space-y-4">
-          <h1 className="text-2xl font-bold text-charcoal">{t('signInTitle')}</h1>
+      <div className="mx-auto -mt-10 flex w-full max-w-sm flex-1 flex-col px-4 pb-10">
+        <form onSubmit={submit} className="space-y-4 rounded-3xl border border-line bg-white p-6 shadow-[0_12px_30px_-18px_rgb(55_52_53/0.5)]">
+          <h1 className="text-2xl font-semibold text-charcoal">{t('signInTitle')}</h1>
           <Field label={t('usernameOrEmail')}>
             <input
               className="field latin"

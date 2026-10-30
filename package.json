@@ -13,6 +13,7 @@
     "@capacitor/core": "^7.0.0",
     "@fontsource/inter": "^5.0.0",
     "@fontsource/noto-nastaliq-urdu": "^5.0.0",
+    "@fontsource/rubik": "^5.0.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "firebase": "^11.9.0",

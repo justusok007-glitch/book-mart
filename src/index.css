@@ -2,12 +2,13 @@
 
 /*
   Book Mart design tokens — taken from the shop logo.
-  Style: flat, light theme only, large touch targets (48px), high contrast.
+  Style: light theme, charcoal app bar (the logo's dark), lime only where it matters
+  (Sell, selected, money in). Large touch targets (48px), high contrast. Font: Rubik.
   Rule: lime is a FILL colour only (charcoal text on it). White text never sits on lime.
 */
 @theme {
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-urdu: "Noto Nastaliq Urdu", "Inter", serif;
+  --font-sans: "Rubik", system-ui, sans-serif;
+  --font-urdu: "Noto Nastaliq Urdu", "Rubik", serif;
 
   /* brand */
   --color-charcoal: #373435;        /* logo dark — primary buttons, headings */
@@ -72,6 +73,21 @@ input, select, textarea { font-size: 16px; } /* prevents zoom on phone focus */
 .field:focus { border-color: var(--color-charcoal); box-shadow: 0 0 0 3px var(--color-lime-100); }
 .field:disabled { background: var(--color-paper); color: var(--color-muted); }
 }
+
+/* ---------- charcoal app bar: controls placed in it switch to their "on dark" look ---------- */
+.app-bar { color: #fff; }
+.app-bar :focus-visible { outline-color: var(--color-lime); }
+.app-bar .icon-btn { color: #fff; }
+.app-bar .icon-btn:hover { background: rgb(255 255 255 / 0.1); }
+.app-bar .icon-btn:active { background: rgb(255 255 255 / 0.18); }
+.app-bar [data-variant="primary"] { background: var(--color-lime); color: var(--color-charcoal); }
+.app-bar [data-variant="primary"]:hover, .app-bar [data-variant="primary"]:active { background: var(--color-lime-600); }
+.app-bar [data-variant="secondary"] { background: rgb(255 255 255 / 0.08); color: #fff; border-color: rgb(255 255 255 / 0.28); }
+.app-bar [data-variant="secondary"]:hover { border-color: rgb(255 255 255 / 0.6); }
+.app-bar [data-variant="secondary"]:active { background: rgb(255 255 255 / 0.16); }
+
+/* numbers line up in tables and totals */
+.tabular-nums, .latin { font-variant-numeric: tabular-nums; }
 
 /* Safe areas for phones with notches / gesture bars */
 .safe-top { padding-top: env(safe-area-inset-top); }

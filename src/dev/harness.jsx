@@ -6,13 +6,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
-import '@fontsource/inter/latin-400.css'
-import '@fontsource/inter/latin-600.css'
-import '@fontsource/inter/latin-700.css'
+import '@fontsource/rubik/latin-400.css'
+import '@fontsource/rubik/latin-500.css'
+import '@fontsource/rubik/latin-600.css'
+import '@fontsource/rubik/latin-700.css'
 import '@fontsource/noto-nastaliq-urdu/arabic-400.css'
 import '@fontsource/noto-nastaliq-urdu/arabic-700.css'
 import '../index.css'
 import { Shell } from '../App'
+import Login from '../pages/Login'
 import { LangProvider } from '../context/LangContext'
 import { AuthContext } from '../context/AuthContext'
 import { buildCatalog, CatalogContext } from '../lib/catalog'
@@ -74,7 +76,7 @@ createRoot(document.getElementById('root')).render(
       <AuthContext.Provider value={fakeAuth}>
         <CatalogContext.Provider value={buildCatalog(cats, items, variants, costs)}>
           <HashRouter>
-            <Shell />
+            {location.hash === '#/__login' ? <Login /> : <Shell />}
           </HashRouter>
         </CatalogContext.Provider>
       </AuthContext.Provider>

@@ -5,99 +5,99 @@ import { FEATURE_GROUPS, FEATURES } from '../lib/permissions'
 import { useCatalog } from '../lib/catalog'
 import { useDayStats } from '../lib/selling'
 import { dayKey } from '../lib/saleMath'
-import { useAuth as useAuthCtx } from '../context/AuthContext'
-import { Badge, IconButton, OfflineBanner, SectionTitle } from '../components/ui'
+import { Badge, IconButton, OfflineBanner } from '../components/ui'
 import Icon from '../components/Icon'
 
 const featurePath = (f) => f.path || `/soon/${f.key}`
 
+// The big lime Sell button — it sits half over the charcoal counter above it
 function SellBlock({ f }) {
   const { pick, t } = useLang()
   return (
     <Link
       to={featurePath(f)}
-      className="group flex min-h-24 items-center gap-4 rounded-3xl bg-lime px-5 py-4 text-charcoal transition-colors duration-150 hover:bg-lime-600 active:bg-lime-600"
+      className="group flex min-h-24 items-center gap-4 rounded-3xl bg-lime px-5 py-4 text-charcoal shadow-[0_10px_24px_-12px_rgb(55_52_53/0.55)] transition-colors duration-150 hover:bg-lime-600 active:bg-lime-600"
     >
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-charcoal">
-        <Icon name="cart" size={30} />
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-charcoal text-lime">
+        <Icon name="cart" size={28} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-2xl font-bold leading-tight">{pick(f)}</div>
         <div className="text-sm font-medium text-charcoal/80">{t('scanOrSelect')}</div>
       </div>
       {f.preview && <Badge tone="dark">{t('preview')}</Badge>}
-      <Icon name="chevron" size={26} className="shrink-0 rtl:rotate-180" />
+      <Icon name="chevron" size={26} className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:rotate-180" />
     </Link>
   )
 }
 
-function Tile({ f }) {
+// one menu row: icon, name, arrow
+function MenuRow({ f }) {
   const { pick, t } = useLang()
-  const ready = f.ready
   return (
-    <Link
-      to={featurePath(f)}
-      className="flex min-h-[104px] flex-col justify-between gap-3 rounded-2xl border border-line bg-white p-4 transition-colors duration-150 hover:border-charcoal-500 active:bg-paper"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${ready ? 'bg-lime-100 text-charcoal' : 'bg-paper text-muted'}`}>
-          <Icon name={f.icon} size={22} />
-        </div>
-        {!ready && (
+    <li>
+      <Link
+        to={featurePath(f)}
+        className="flex min-h-[60px] items-center gap-3.5 px-4 py-2.5 transition-colors duration-150 hover:bg-lime-50 active:bg-lime-100"
+      >
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${f.ready ? 'bg-lime-100 text-charcoal' : 'bg-paper text-muted'}`}>
+          <Icon name={f.icon} size={20} />
+        </span>
+        <span className={`min-w-0 flex-1 font-medium leading-snug ${f.ready ? 'text-ink' : 'text-muted'}`}>{pick(f)}</span>
+        {!f.ready && (
           <Badge>
             {t('phase')} <span className="latin ms-1">{f.phase}</span>
           </Badge>
         )}
-      </div>
-      <div className={`font-semibold leading-snug ${ready ? 'text-ink' : 'text-muted'}`}>{pick(f)}</div>
-    </Link>
+        <Icon name="chevron" size={18} className="shrink-0 text-muted rtl:rotate-180" />
+      </Link>
+    </li>
   )
 }
 
-function TodayStrip() {
+// Today's figures, shown like the display on a shop till
+function Counter() {
   const { t } = useLang()
   const { ready, lowList } = useCatalog()
-  const { can } = useAuthCtx()
+  const { can } = useAuth()
   const today = useDayStats(dayKey(), can('daily_closing') || can('view_profit_loss') || can('view_sales'))
-  const money = (n) => (today ? 'Rs ' + Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 }) : null)
+  const money = (n) => (today ? Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 }) : '—')
   const stats = [
     {
       label: t('todaySales'),
-      icon: 'cart',
       // net of returns: what was sold minus what came back today
       value: money((today?.salesTotal || 0) - (today?.returnsTotal || 0)),
-      sub: today?.returnsTotal > 0 ? `${t('returnsShort')} Rs ${Number(today.returnsTotal).toLocaleString('en-PK')}` : null,
+      rs: true,
+      sub: today?.returnsTotal > 0 ? `${t('returnsShort')} ${Number(today.returnsTotal).toLocaleString('en-PK')}` : null,
       to: can('view_sales') ? '/sales' : null,
     },
-    { label: t('cashReceivedToday'), icon: 'cash', value: money(today?.cashIn), to: can('daily_closing') ? '/closing' : null },
-    { label: t('lowStock'), icon: 'alert', value: ready ? lowList.length : null, to: '/low-stock', danger: ready && lowList.length > 0 },
+    { label: t('cashReceivedToday'), value: money(today?.cashIn), rs: true, to: can('daily_closing') ? '/closing' : null },
+    { label: t('lowStock'), value: ready ? lowList.length : '—', to: '/low-stock', alert: ready && lowList.length > 0 },
   ]
   return (
-    <div className="mb-6">
-      <div className="grid grid-cols-3 gap-2.5">
-        {stats.map((s) => {
-          const body = (
-            <>
-              <div className="flex items-start gap-1.5 text-xs font-semibold leading-tight text-muted">
-                <Icon name={s.icon} size={14} className="mt-px shrink-0" />
-                <span>{s.label}</span>
-              </div>
-              <div className={`latin mt-1 text-xl font-bold ${s.danger ? 'text-danger' : 'text-ink'}`}>{s.value ?? '—'}</div>
-              {s.sub && <div className="text-xs text-muted">{s.sub}</div>}
-            </>
-          )
-          return s.to ? (
-            <Link key={s.label} to={s.to} className="rounded-2xl border border-line bg-white p-3 transition-colors duration-150 hover:border-charcoal-500 active:bg-paper">
-              {body}
-            </Link>
-          ) : (
-            <div key={s.label} className="rounded-2xl border border-line bg-white p-3">
-              {body}
+    <div className="grid grid-cols-3 divide-x divide-white/15 rtl:divide-x-reverse">
+      {stats.map((s) => {
+        const body = (
+          <>
+            <div className="text-xs font-medium leading-tight text-white/70">{s.label}</div>
+            <div className="latin mt-1.5 flex items-baseline gap-1 whitespace-nowrap" dir="ltr">
+              {s.rs && <span className="text-xs font-medium text-white/60">Rs</span>}
+              <span className={`text-[22px] font-semibold leading-none ${s.alert ? 'text-warn' : 'text-white'}`}>{s.value}</span>
+              {s.alert && <Icon name="alert" size={14} className="text-warn" />}
             </div>
-          )
-        })}
-      </div>
-      
+            {s.sub && <div className="latin mt-1 text-[11px] text-white/60">{s.sub}</div>}
+          </>
+        )
+        return s.to ? (
+          <Link key={s.label} to={s.to} className="block px-3 py-1 first:ps-0 last:pe-0 hover:opacity-90">
+            {body}
+          </Link>
+        ) : (
+          <div key={s.label} className="px-3 py-1 first:ps-0 last:pe-0">
+            {body}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -111,45 +111,55 @@ export default function Home() {
   const showToday = can('daily_closing') || can('view_profit_loss')
 
   return (
-    <div className="min-h-screen pb-8">
-      <header className="safe-top border-b border-line bg-white">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <img src="./logo-mark.png" alt="Book Mart" className="h-11 w-11 object-contain" />
-          <div className="min-w-0 flex-1">
-            <div className="text-sm text-muted">{t('hello')}</div>
-            <div className="flex items-center gap-2">
-              <span className="truncate text-lg font-bold text-charcoal">{displayName}</span>
-              {roleName && <Badge tone="lime">{roleName}</Badge>}
+    <div className="min-h-screen pb-10">
+      <header className="app-bar safe-top bg-charcoal">
+        <div className={`mx-auto max-w-3xl px-4 ${sell ? 'pb-14' : 'pb-6'}`}>
+          <div className="flex items-center gap-3 py-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white">
+              <img src="./logo-mark.png" alt="Book Mart" className="h-9 w-9 object-contain" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm text-white/70">{t('hello')}</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate text-lg font-semibold text-white">{displayName}</span>
+                {roleName && <Badge tone="lime">{roleName}</Badge>}
+              </div>
             </div>
+            <IconButton icon="logout" label={t('signOut')} onClick={logout} iconClass="rtl:rotate-180" />
           </div>
-          <IconButton icon="logout" label={t('signOut')} onClick={logout} className="text-charcoal" iconClass="rtl:rotate-180" />
+          {showToday && (
+            <div className="mt-2 border-t border-white/15 pt-4">
+              <Counter />
+            </div>
+          )}
         </div>
       </header>
       <OfflineBanner />
 
-      <main className="mx-auto max-w-3xl px-4 pt-5">
-        {showToday && <TodayStrip />}
-
+      <main className="mx-auto max-w-3xl px-4">
         {sell && (
-          <div className="mb-7">
+          <div className="relative z-10 -mt-10 mb-7">
             <SellBlock f={sell} />
           </div>
         )}
+        {!sell && <div className="h-5" />}
 
-        {FEATURE_GROUPS.map((g) => {
-          const items = visible.filter((f) => f.group === g.key)
-          if (!items.length) return null
-          return (
-            <section key={g.key} className="mb-7">
-              <SectionTitle>{pick(g)}</SectionTitle>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {items.map((f) => (
-                  <Tile key={f.key} f={f} />
-                ))}
-              </div>
-            </section>
-          )
-        })}
+        <div className="grid gap-6 sm:grid-cols-2">
+          {FEATURE_GROUPS.map((g) => {
+            const items = visible.filter((f) => f.group === g.key)
+            if (!items.length) return null
+            return (
+              <section key={g.key}>
+                <h2 className="mb-2 px-1 text-[15px] font-semibold text-charcoal">{pick(g)}</h2>
+                <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
+                  {items.map((f) => (
+                    <MenuRow key={f.key} f={f} />
+                  ))}
+                </ul>
+              </section>
+            )
+          })}
+        </div>
       </main>
     </div>
   )

@@ -125,8 +125,8 @@ export const FEATURES = [
   { key: 'expenses', group: 'money', perm: 'expenses', icon: 'receipt', en: 'Expenses', ur: 'اخراجات', ready: true, path: '/expenses' },
   { key: 'investment', group: 'money', perm: 'investment', icon: 'trend', en: 'Investment', ur: 'سرمایہ کاری', ready: true, path: '/investment' },
 
-  { key: 'profit-loss', group: 'reports', perm: 'view_profit_loss', icon: 'chart', en: 'Profit & Loss', ur: 'نفع و نقصان', phase: 7 },
-  { key: 'reports', group: 'reports', perm: 'view_reports', icon: 'chart', en: 'Reports', ur: 'رپورٹس', phase: 7 },
+  { key: 'profit-loss', group: 'reports', perm: 'view_profit_loss', icon: 'chart', en: 'Profit & Loss', ur: 'نفع و نقصان', ready: true, path: '/profit-loss' },
+  { key: 'reports', group: 'reports', perm: 'view_reports', icon: 'trend', en: 'Reports', ur: 'رپورٹس', ready: true, path: '/reports' },
 
   { key: 'users', group: 'admin', perm: 'manage_users', icon: 'users', en: 'Users', ur: 'صارفین', ready: true, path: '/users' },
   { key: 'roles', group: 'admin', perm: 'manage_roles', icon: 'shield', en: 'Roles & Permissions', ur: 'عہدے اور اختیارات', ready: true, path: '/roles' },

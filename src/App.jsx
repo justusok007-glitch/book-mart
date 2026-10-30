@@ -27,6 +27,8 @@ import Expenses from './pages/Expenses'
 import CashOut, { CashOutSummary } from './pages/CashOut'
 import Investment from './pages/Investment'
 import Closing from './pages/Closing'
+import ProfitLoss from './pages/ProfitLoss'
+import Reports from './pages/Reports'
 
 function RequirePerm({ perm, children }) {
   const { can } = useAuth()
@@ -99,6 +101,8 @@ export function Shell() {
       <Route path="/cash-out/summary" element={<RequirePerm perm="view_cash_out_summary"><CashOutSummary /></RequirePerm>} />
       <Route path="/investment" element={<RequirePerm perm="investment"><Investment /></RequirePerm>} />
       <Route path="/closing" element={<RequirePerm perm="daily_closing"><Closing /></RequirePerm>} />
+      <Route path="/profit-loss" element={<RequirePerm perm="view_profit_loss"><ProfitLoss /></RequirePerm>} />
+      <Route path="/reports" element={<RequirePerm perm="view_reports"><Reports /></RequirePerm>} />
       <Route path="/sell" element={<RequirePerm perm="sell"><SellPreview /></RequirePerm>} />
       <Route path="/soon/:key" element={<ComingSoon />} />
       <Route path="*" element={<Navigate to="/" replace />} />

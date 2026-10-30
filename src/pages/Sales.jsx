@@ -18,7 +18,8 @@ const timeOf = (s) => {
 export function SalesList() {
   const { t, pick } = useLang()
   const { can } = useAuth()
-  const [day, setDay] = useState(dayKey())
+  const [search] = useSearchParams()
+  const [day, setDay] = useState(() => (/^\d{4}-\d{2}-\d{2}$/.test(search.get('day') || '') ? search.get('day') : dayKey()))
   const [list, setList] = useState(null)
   const showProfit = can('view_profit_loss')
 

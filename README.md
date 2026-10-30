@@ -21,7 +21,7 @@ Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, fl
 4. ✅ Sell — saves offline, stock down, cost at sale for profit, discount, cash/part/udhaar with customers, receipt print & share, sales history
 5. ✅ Customers (udhaar account, receive payments, WhatsApp reminders) and returns (stock back, cash or account refund, damaged option)
 6. ✅ Expenses, owner cash-out (who/when) & summary, investment & business position, daily closing (cash count, short/extra)
-7. Reports — profit & loss, cash-out summary, sales by day/salesman
+7. ✅ Reports — profit & loss, sales by day/month, salesmen, top items, stock value by category
 8. Backup & restore, testing, APK release
 
 ## How access works

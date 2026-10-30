@@ -42,6 +42,9 @@ client, and how to work on it safely. Keep it up to date at the end of every cha
 - Sales screens must **not show profit** (profit only in Profit & Loss / Reports for `view_profit_loss`).
 - Receipt numbers: **each user has a fixed letter** → `A00001, A00002…` (per user series, works offline).
   Returns can search `A00125`, `a125`, or just `125`; old-style `261030-7K3F` found by full number or last 4 chars.
+- **Trainee role** (practice only): admin gives it features like any role, but everything a trainee does goes to a
+  practice copy of the shop on their own phone — **zero effect on the real database**. Reset button (banner on every
+  screen + Settings) throws the copy away and copies the real shop again. See §8b.
 - Home menu: **rectangular tiles** (2 columns) grouped by section — client prefers tiles over list rows.
 - Design (Oct 2026 redesign, client approved): Rubik font, **charcoal app bar** on every screen, Home has a
   charcoal "counter" with today's figures and the lime Sell button overlapping it.
@@ -145,6 +148,28 @@ sales create checks discount/credit perms; customers/suppliers balance-only upda
 that user; **catch-all `match /{document=**}` allows the Admin everything** (backup/restore/bulk/reset).
 Always tell the client to publish after changing this file.
 
+## 8b. Training mode (Trainee role) — how isolation works
+
+- A role with `training: true` (default role `trainee` "Trainee/زیرِ تربیت" is created at Admin login; any role except
+  Owner can be switched to training in Roles & Permissions).
+- `lib/firebase.js`: `realDb` (real) and `export let db` (what screens use). `setActiveDb()` swaps it; `isTraining()`.
+  `runTx()` replaces runTransaction (in training it applies the steps to the phone copy).
+- `lib/training.js`: practice copy = separate Firebase app (`practice-<uid>-<gen>`, fake projectId), persistent cache,
+  `connectFirestoreEmulator(127.0.0.1:1)` + `disableNetwork` → can never reach Google. Seeded from realDb
+  (settings, users, categories, items, variants, barcodes, itemCosts, customers, suppliers, counters) with a 15 s
+  server timeout per collection, falling back to this phone's cache. Reset = terminate + clearIndexedDbPersistence +
+  gen+1 + seed again. Seed flag/gen in localStorage.
+- `context/TrainingContext.jsx` (between AuthProvider and CatalogProvider): for a trainee it shows "Preparing practice
+  copy…", swaps db, then remounts everything (key). `useTraining()` → { active, reset, info }.
+- AuthContext always uses realDb; waits for the role before showing screens; `training` flag; TRAINING_BLOCKED perms
+  (manage_users, manage_roles, backup_restore, bulk_inventory, shop_settings) are off for trainees.
+- Rules (lock 3): `can()` is false for training roles → no real writes at all; `isTrainee()` may read itemCosts,
+  customers, suppliers, counters (to make the copy); receiptCounters write blocked for trainees.
+- Practice receipts use separate local counters (`bm-receipt-training-<uid>`), so real numbering isn't affected.
+- Harness test: `harness.html?trainee=1#/sell` (fake trainee; `window.__seedReal()` on the admin harness first puts a
+  sample "real shop" in the browser cache; `window.__fb` exposes realDb/db for checks). Verified: practice sale →
+  practice stock 48→45, real stock stays 48, real sales 0; reset → practice back to 48.
+
 ## 9. Build, deploy, APK
 
 - `.github/workflows/deploy.yml` (on push to main): `npm install`, `npm run build`, harness build
@@ -189,6 +214,7 @@ Always tell the client to publish after changing this file.
 - Scan beep: every barcode scan beeps — camera (Sell, Buy, item form) and USB/Bluetooth keyboard scanners
   (code + Enter in the search box). Sell/Buy beep only when the item is really added; not found / no stock →
   low double beep. Viewfinder/BarcodeScanner take `beep={false}` when the screen beeps itself.
+- Trainee role / training mode with Reset (§8b).
 
 ## 12. Open items / ideas
 

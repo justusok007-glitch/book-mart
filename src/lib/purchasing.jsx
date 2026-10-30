@@ -17,14 +17,13 @@ import {
   onSnapshot,
   orderBy,
   query,
-  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { db, runTx } from './firebase'
 import { nextAverage, round2 } from './costing'
 import { dayKey } from './saleMath'
 
@@ -104,7 +103,7 @@ export async function recordPurchase({ supplier, billNo, note, lines, paid, payT
   const itemIds = [...new Set(merged.map((l) => l.itemId))]
   const purchaseRef = doc(collection(db, 'purchases'))
 
-  await runTransaction(db, async (tx) => {
+  await runTx(async (tx) => {
     // ---- reads ----
     const costSnaps = await Promise.all(itemIds.map((id) => tx.get(doc(db, 'itemCosts', id))))
     const heldByItem = {}

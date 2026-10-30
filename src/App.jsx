@@ -16,6 +16,7 @@ import ItemForm from './pages/ItemForm'
 import Categories from './pages/Categories'
 import LowStock from './pages/LowStock'
 import { CatalogProvider } from './lib/catalog'
+import { TrainingProvider } from './context/TrainingContext'
 import Buy from './pages/Buy'
 import Suppliers from './pages/Suppliers'
 import SupplierDetail from './pages/SupplierDetail'
@@ -118,11 +119,13 @@ export default function App() {
   return (
     <LangProvider>
       <AuthProvider>
-        <CatalogProvider>
-          <HashRouter>
-            <Shell />
-          </HashRouter>
-        </CatalogProvider>
+        <TrainingProvider>
+          <CatalogProvider>
+            <HashRouter>
+              <Shell />
+            </HashRouter>
+          </CatalogProvider>
+        </TrainingProvider>
       </AuthProvider>
     </LangProvider>
   )

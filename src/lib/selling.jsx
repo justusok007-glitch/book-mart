@@ -22,7 +22,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { db, isTraining } from './firebase'
 import { dayKey, formatReceipt, makeReceiptNo, saleTotals } from './saleMath'
 
 /* ================= shop details (for receipts) ================= */
@@ -72,7 +72,9 @@ export function saveCustomer({ id, name, phone = '', address = '', note = '' }) 
 // so a reinstalled app or a new phone carries on from the last number.
 
 const serverLast = {}
-const localKey = (uid) => `bm-receipt-${uid}`
+const lastKey = (uid) => (isTraining() ? 'training-' : '') + uid
+// practice receipts count separately, so training never moves the real receipt numbers
+const localKey = (uid) => `bm-receipt-${isTraining() ? 'training-' : ''}${uid}`
 function localLast(uid) {
   try {
     return Number(localStorage.getItem(localKey(uid))) || 0
@@ -87,7 +89,7 @@ export function useReceiptCounter(uid) {
     return onSnapshot(
       doc(db, 'receiptCounters', uid),
       (s) => {
-        if (s.exists()) serverLast[uid] = Math.max(serverLast[uid] || 0, Number(s.data().last) || 0)
+        if (s.exists()) serverLast[lastKey(uid)] = Math.max(serverLast[lastKey(uid)] || 0, Number(s.data().last) || 0)
       },
       () => {},
     )
@@ -95,13 +97,13 @@ export function useReceiptCounter(uid) {
 }
 
 function takeReceiptNumber(user) {
-  const n = Math.max(localLast(user.uid), serverLast[user.uid] || 0) + 1
+  const n = Math.max(localLast(user.uid), serverLast[lastKey(user.uid)] || 0) + 1
   try {
     localStorage.setItem(localKey(user.uid), String(n))
   } catch {
     /* ignore */
   }
-  serverLast[user.uid] = n
+  serverLast[lastKey(user.uid)] = n
   return n
 }
 

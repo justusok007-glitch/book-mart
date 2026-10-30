@@ -10,6 +10,7 @@ import { printReceipt } from '../components/Receipt'
 import { useShopSettings } from '../lib/selling'
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
+import { useTraining } from '../context/TrainingContext'
 
 const APK_URL = 'https://github.com/justusok007-glitch/book-mart/releases/download/apk-latest/book-mart.apk'
 
@@ -47,6 +48,26 @@ function PrinterChoice() {
         <Icon name="printer" size={18} /> {t('testPrint')}
       </Button>
     </div>
+  )
+}
+
+function TrainingSection() {
+  const { t } = useLang()
+  const training = useTraining()
+  if (!training?.active) return null
+  const at = training.info?.seededAt
+  return (
+    <Section icon="book" title={t('practiceData')}>
+      <p className="text-sm text-muted">{t('trainingRoleHint')}</p>
+      {at && (
+        <p className="mt-2 text-sm">
+          {t('practiceCopiedOn')} <span className="latin font-semibold">{new Date(at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+        </p>
+      )}
+      <Button variant="secondary" className="mt-3 w-full" onClick={() => window.confirm(t('confirmTrainingReset')) && training.reset()}>
+        <Icon name="rotate" size={18} /> {t('resetTraining')}
+      </Button>
+    </Section>
   )
 }
 
@@ -187,6 +208,8 @@ export default function Settings() {
             </a>
           </Section>
         )}
+
+        <TrainingSection />
 
         <Section icon="lock" title={t('changePassword')}>
           <ChangePassword />

@@ -1,9 +1,12 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, initializeAuth, inMemoryPersistence } from 'firebase/auth'
 import {
+  getDocFromCache,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
+  runTransaction,
+  writeBatch,
 } from 'firebase/firestore'
 
 // This config is public by design; access is controlled by firestore.rules
@@ -26,9 +29,50 @@ export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 
 // Offline-first Firestore: data is cached on the phone, writes queue while offline
-export const db = initializeFirestore(app, {
+export const realDb = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 })
+
+// The database every screen uses. Normally the real shop database; for a trainee it is switched to the
+// practice copy on this phone (see lib/training.js). `export let` keeps every import pointing at the current one.
+export let db = realDb
+export const isTraining = () => db !== realDb
+export function setActiveDb(next) {
+  db = next
+}
+
+/**
+ * runTransaction that also works in training mode.
+ * The practice copy never talks to a server, so there the same steps are applied straight to the phone copy.
+ */
+export async function runTx(fn) {
+  if (!isTraining()) return runTransaction(db, fn)
+  const batch = writeBatch(db)
+  const tx = {
+    get: async (ref) => {
+      try {
+        return await getDocFromCache(ref)
+      } catch {
+        return { id: ref.id, exists: () => false, data: () => undefined }
+      }
+    },
+    set(ref, data, opts) {
+      opts ? batch.set(ref, data, opts) : batch.set(ref, data)
+      return tx
+    },
+    update(ref, data) {
+      batch.update(ref, data)
+      return tx
+    },
+    delete(ref) {
+      batch.delete(ref)
+      return tx
+    },
+  }
+  const result = await fn(tx)
+  batch.commit().catch(() => {}) // applied on the phone at once; never sent anywhere
+  return result
+}
 
 // A second Firebase app used only to create staff accounts,
 // so creating a user does not log the admin out.

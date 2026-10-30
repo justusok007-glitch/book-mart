@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, up
 import { db } from '../lib/firebase'
 import { PERMISSION_GROUPS } from '../lib/permissions'
 import { useLang } from '../context/LangContext'
-import { Button, Card, Checkbox, Field, Notice, Page, Sheet } from '../components/ui'
+import { Button, Card, Checkbox, Field, Notice, Page, Sheet, Toggle } from '../components/ui'
 import Icon from '../components/Icon'
 import { useRoles } from './Users'
 
@@ -112,6 +112,7 @@ export default function Roles() {
             className={chip(selected === r.id)}
           >
             {pick({ en: r.name, ur: r.nameUr })}
+            {r.training && <Icon name="book" size={14} />}
             <span
               className={`latin rounded-full px-2 text-xs ${selected === r.id ? 'bg-lime text-charcoal' : 'bg-paper text-muted'}`}
             >
@@ -148,6 +149,17 @@ export default function Roles() {
             </Button>
           )}
         </div>
+      )}
+      {role && role.id !== 'owner' && (
+        <Card className={`mb-4 p-4 ${role.training ? 'border-warn bg-warn-50' : ''}`}>
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 font-semibold">
+              <Icon name="book" size={18} /> {t('trainingRole')}
+            </span>
+            <Toggle checked={role.training === true} label={t('trainingRole')} onChange={(on) => updateDoc(doc(db, 'roles', role.id), { training: on })} />
+          </div>
+          <p className="mt-1 text-sm text-muted">{t('trainingRoleHint')}</p>
+        </Card>
       )}
       {error && (
         <div className="mb-4">

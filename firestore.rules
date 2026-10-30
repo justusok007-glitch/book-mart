@@ -22,12 +22,22 @@ service cloud.firestore {
       return signedIn() && exists(userPath()) && profile().active == true;
     }
 
+    function roleDoc() { return get(/databases/$(database)/documents/roles/$(profile().roleId)).data; }
+
     // Does the signed-in user's role have permission p?
+    // A TRAINING role (training == true) gets nothing here: trainees practise on a copy on their own phone,
+    // so they can never change the real shop data.
     function can(p) {
       return isAdmin() || (
         isActive() &&
-        get(/databases/$(database)/documents/roles/$(profile().roleId)).data.permissions.get(p, false) == true
+        roleDoc().get('training', false) != true &&
+        roleDoc().permissions.get(p, false) == true
       );
+    }
+
+    // trainee: may READ what is needed to make their practice copy, nothing else
+    function isTrainee() {
+      return isActive() && roleDoc().get('training', false) == true;
     }
 
     // ---------- users ----------
@@ -176,7 +186,8 @@ service cloud.firestore {
 
     // each user's receipt counter (A00001, A00002…) — only that user writes it
     match /receiptCounters/{uid} {
-      allow read, write: if signedIn() && request.auth.uid == uid && (isAdmin() || isActive());
+      allow read: if signedIn() && request.auth.uid == uid && (isAdmin() || isActive());
+      allow write: if signedIn() && request.auth.uid == uid && (isAdmin() || (isActive() && !isTrainee()));
     }
 
     // ---------- money (Phase 6) ----------
@@ -215,6 +226,12 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if isAdmin();
     }
+
+    // ---------- trainees: read-only copy source (they can never write) ----------
+    match /itemCosts/{id} { allow read: if isTrainee(); }
+    match /customers/{id} { allow read: if isTrainee(); }
+    match /suppliers/{id} { allow read: if isTrainee(); }
+    match /counters/{id}  { allow read: if isTrainee(); }
 
     // Everything else is closed.
   }

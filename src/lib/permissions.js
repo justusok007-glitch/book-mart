@@ -95,6 +95,19 @@ export const DEFAULT_ROLES = {
   },
 }
 
+// Trainee: practice-only role. Everything they do goes to a practice copy on their phone (lib/training.js).
+export const TRAINEE_ROLE = {
+  name: 'Trainee',
+  nameUr: 'زیرِ تربیت',
+  order: 4,
+  system: true,
+  training: true,
+  permissions: on(['sell', 'sell_discount', 'sell_credit', 'sale_returns', 'view_sales', 'view_items', 'low_stock', 'manage_customers', 'receive_payments']),
+}
+
+// never available in training, even if ticked: these change logins or the shop's setup
+export const TRAINING_BLOCKED = ['manage_users', 'manage_roles', 'backup_restore', 'bulk_inventory', 'shop_settings']
+
 // Home screen tiles, grouped. "ready" = built; others show their phase badge until built.
 export const FEATURE_GROUPS = [
   { key: 'stock', en: 'Stock', ur: 'اسٹاک' },

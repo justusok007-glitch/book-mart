@@ -19,14 +19,13 @@ import {
   limit,
   onSnapshot,
   query,
-  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { db, runTx } from './firebase'
 import { useAuth } from '../context/AuthContext'
 import { STARTER_CATEGORIES } from './colors'
 
@@ -182,7 +181,7 @@ export function ean13(first12) {
 // Shop-made barcode in the in-store range 200xxxxxxxxxC (never clashes with real product barcodes)
 export async function generateBarcode() {
   const ref = doc(db, 'counters', 'barcode')
-  return runTransaction(db, async (tx) => {
+  return runTx(async (tx) => {
     const snap = await tx.get(ref)
     const next = (snap.exists() ? snap.data().next : 1) || 1
     tx.set(ref, { next: next + 1 })
@@ -235,7 +234,7 @@ export async function saveItem({ itemId, item, rows, cost, original = [], user }
     .map((r) => ({ r, code: (r.barcode || '').trim() }))
     .filter(({ r, code }) => code && (!r.id || oldById[r.id]?.barcode !== code))
 
-  await runTransaction(db, async (tx) => {
+  await runTx(async (tx) => {
     // 1) reads first
     const snaps = await Promise.all(claims.map(({ code }) => tx.get(doc(db, 'barcodes', code))))
     snaps.forEach((s, i) => {

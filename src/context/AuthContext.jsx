@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { collection, doc, getDoc, getDocs, onSnapshot, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore'
-import { auth, db, isAdminEmail, usernameToEmail } from '../lib/firebase'
-import { ADMIN_ONLY, DEFAULT_ROLES } from '../lib/permissions'
+// login, profile and role always come from the REAL database (never the training copy)
+import { auth, realDb as db, isAdminEmail, usernameToEmail } from '../lib/firebase'
+import { ADMIN_ONLY, DEFAULT_ROLES, TRAINEE_ROLE, TRAINING_BLOCKED } from '../lib/permissions'
 import { nextLetter } from '../lib/saleMath'
 
 export const AuthContext = createContext(null)
@@ -50,6 +51,15 @@ async function bootstrapAdmin(u) {
       batch.set(doc(db, 'meta', 'setup'), { rolesSeeded: true, at: serverTimestamp() })
       await batch.commit()
     }
+    // the practice-only Trainee role (added once; Admin can still change its features)
+    const trainee = await getDoc(doc(db, 'roles', 'trainee'))
+    const metaNow = await getDoc(doc(db, 'meta', 'setup'))
+    if (!trainee.exists() && !metaNow.data()?.traineeSeeded) {
+      const batch = writeBatch(db)
+      batch.set(doc(db, 'roles', 'trainee'), { ...TRAINEE_ROLE, createdAt: serverTimestamp() })
+      batch.set(doc(db, 'meta', 'setup'), { traineeSeeded: true }, { merge: true })
+      await batch.commit()
+    }
     await assignReceiptLetters()
   } catch (e) {
     // Offline on first run, or rules not published yet — try again next login
@@ -88,17 +98,27 @@ export function AuthProvider({ children }) {
 
   // live role (so permission changes apply without re-login)
   const roleId = profile?.roleId
+  const [roleFor, setRoleFor] = useState(null) // which roleId the loaded role belongs to
   useEffect(() => {
     if (!roleId || roleId === 'admin') {
       setRole(null)
+      setRoleFor(roleId || null)
       return
     }
     return onSnapshot(
       doc(db, 'roles', roleId),
-      (snap) => setRole(snap.exists() ? { id: snap.id, ...snap.data() } : null),
-      () => setRole(null),
+      (snap) => {
+        setRole(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+        setRoleFor(roleId)
+      },
+      () => {
+        setRole(null)
+        setRoleFor(roleId)
+      },
     )
   }, [roleId])
+  // wait for the role too, so a trainee never sees the real shop screens even for a moment
+  const roleLoading = !!profile?.roleId && roleFor !== profile.roleId
 
   const isAdmin = !!user && isAdminEmail(user.email)
 
@@ -107,6 +127,8 @@ export function AuthProvider({ children }) {
       if (!perm) return true
       if (isAdmin) return true
       if (ADMIN_ONLY.includes(perm)) return false
+      // trainees practise everything they are given except screens that change logins or shop setup
+      if (role?.training === true && TRAINING_BLOCKED.includes(perm)) return false
       return !!profile?.active && role?.permissions?.[perm] === true
     },
     [isAdmin, profile, role],
@@ -127,11 +149,12 @@ export function AuthProvider({ children }) {
       can,
       login,
       logout,
-      loading: user === undefined || (!!user && !isAdmin && !profileLoaded),
+      loading: user === undefined || (!!user && !isAdmin && (!profileLoaded || roleLoading)),
       blocked: !!user && !isAdmin && profileLoaded && (!profile || profile.active !== true),
       displayName: profile?.name || (isAdmin ? 'Admin' : ''),
+      training: !isAdmin && role?.training === true,
     }),
-    [user, profile, role, isAdmin, can, login, logout, profileLoaded],
+    [user, profile, role, isAdmin, can, login, logout, profileLoaded, roleLoading],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

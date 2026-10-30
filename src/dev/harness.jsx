@@ -17,7 +17,11 @@ import { Shell } from '../App'
 import Login from '../pages/Login'
 import { LangProvider } from '../context/LangContext'
 import { AuthContext } from '../context/AuthContext'
-import { buildCatalog, CatalogContext } from '../lib/catalog'
+import { buildCatalog, CatalogContext, CatalogProvider } from '../lib/catalog'
+import { TrainingProvider } from '../context/TrainingContext'
+import { TRAINING_BLOCKED } from '../lib/permissions'
+import * as fb from '../lib/firebase'
+import { collection, doc, getDocs, writeBatch } from 'firebase/firestore'
 
 const fakeAuth = {
   user: { uid: 'admin', email: 'admin@example.com' },
@@ -70,16 +74,52 @@ const variants = [
 ]
 const costs = { i1: { avgCost: 21.5, lastCost: 22 }, i4: { avgCost: 92, lastCost: 95 } }
 
+// test helpers for the trainee check (only in this harness)
+window.__fb = { fb, collection, doc, getDocs, writeBatch }
+// put the sample shop into the (offline) "real" database cache, as if it came from Firebase
+window.__seedReal = () => {
+  const b = writeBatch(fb.realDb)
+  for (const c of cats) b.set(doc(fb.realDb, 'categories', c.id), c)
+  for (const i of items) b.set(doc(fb.realDb, 'items', i.id), i)
+  for (const x of variants) b.set(doc(fb.realDb, 'variants', x.id), x)
+  for (const [id, c] of Object.entries(costs)) b.set(doc(fb.realDb, 'itemCosts', id), c)
+  b.commit().catch(() => {})
+}
+
+const trainee = new URLSearchParams(location.search).has('trainee')
+const traineeAuth = {
+  ...fakeAuth,
+  user: { uid: 'trainee1', email: 'ali@bookmart.app' },
+  profile: { name: 'Ali (trainee)', roleId: 'trainee', active: true, receiptLetter: 'T' },
+  role: { id: 'trainee', name: 'Trainee', training: true },
+  isAdmin: false,
+  training: true,
+  displayName: 'Ali (trainee)',
+  can: (p) => !TRAINING_BLOCKED.includes(p) && p !== 'manage_roles' && p !== 'backup_restore',
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <LangProvider>
-      <AuthContext.Provider value={fakeAuth}>
-        <CatalogContext.Provider value={buildCatalog(cats, items, variants, costs)}>
-          <HashRouter>
-            {location.hash === '#/__login' ? <Login /> : <Shell />}
-          </HashRouter>
-        </CatalogContext.Provider>
-      </AuthContext.Provider>
+      {trainee ? (
+        <AuthContext.Provider value={traineeAuth}>
+          <TrainingProvider>
+            <CatalogProvider>
+              <HashRouter>
+                <Shell />
+              </HashRouter>
+            </CatalogProvider>
+          </TrainingProvider>
+        </AuthContext.Provider>
+      ) : (
+        <AuthContext.Provider value={fakeAuth}>
+          <CatalogContext.Provider value={buildCatalog(cats, items, variants, costs)}>
+            <HashRouter>
+              {location.hash === '#/__login' ? <Login /> : <Shell />}
+            </HashRouter>
+          </CatalogContext.Provider>
+        </AuthContext.Provider>
+      )}
     </LangProvider>
   </StrictMode>,
 )

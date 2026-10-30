@@ -632,4 +632,17 @@ export const STRINGS = {
   receiptLetterHint: { en: 'This user\'s receipts:', ur: 'اس صارف کی رسیدیں:' },
   letterInvalid: { en: 'Receipt letter must be 1 or 2 English letters (A–Z).', ur: 'رسید کا حرف انگریزی کے 1 یا 2 حروف (A–Z) ہونا چاہیے۔' },
   letterTaken: { en: 'Another user already has this receipt letter.', ur: 'یہ حرف کسی اور صارف کے پاس ہے۔' },
+  // training (practice) role
+  preparingTraining: { en: 'Preparing practice copy of the shop…', ur: 'دکان کی مشق والی کاپی تیار ہو رہی ہے…' },
+  trainingNeedsInternet: { en: 'Internet needed to start training', ur: 'تربیت شروع کرنے کے لیے انٹرنیٹ ضروری ہے' },
+  trainingNeedsInternetBody: { en: 'The first time, the app copies the shop’s items and customers to this phone for practice. Connect to the internet and try again.', ur: 'پہلی بار ایپ مشق کے لیے دکان کی اشیاء اور گاہک اس فون پر کاپی کرتی ہے۔ انٹرنیٹ سے جڑیں اور دوبارہ کوشش کریں۔' },
+  tryAgain: { en: 'Try again', ur: 'دوبارہ کوشش کریں' },
+  trainingBanner: { en: 'Training — practice only. Nothing here changes the shop.', ur: 'تربیت — صرف مشق۔ یہاں کچھ بھی دکان کا ڈیٹا نہیں بدلتا۔' },
+  resetTraining: { en: 'Reset', ur: 'ری سیٹ' },
+  confirmTrainingReset: { en: 'Start practice again from the shop’s current data? Everything practised so far on this phone will be cleared.', ur: 'دکان کے موجودہ ڈیٹا سے مشق دوبارہ شروع کریں؟ اس فون پر اب تک کی مشق ختم ہو جائے گی۔' },
+  trainingRole: { en: 'Training role (practice only)', ur: 'تربیتی عہدہ (صرف مشق)' },
+  trainingRoleHint: { en: 'Users with this role practise on a copy of the shop on their own phone. Nothing they do changes the real data. User, role, backup and shop-setting screens stay locked for them.', ur: 'اس عہدے والے صارفین اپنے فون پر دکان کی کاپی پر مشق کرتے ہیں۔ ان کا کوئی کام اصل ڈیٹا نہیں بدلتا۔ صارفین، عہدے، بیک اپ اور دکان کی ترتیبات ان کے لیے بند رہتی ہیں۔' },
+  practiceData: { en: 'Practice data', ur: 'مشق کا ڈیٹا' },
+  practiceCopiedOn: { en: 'Copied from the shop on', ur: 'دکان سے کاپی کی تاریخ' },
+  trainingBadge: { en: 'Training', ur: 'تربیت' },
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from './Icon'
+import { useTraining } from '../context/TrainingContext'
 import { useLang } from '../context/LangContext'
 
 /* ---------- Buttons ---------- */
@@ -190,16 +191,39 @@ export function useOnline() {
 export function OfflineBanner() {
   const online = useOnline()
   const { t } = useLang()
-  if (online) return null
   return (
-    <div role="status" className="flex items-center justify-center gap-2 bg-warn px-4 py-2 text-sm font-semibold text-charcoal">
-      <Icon name="wifiOff" size={16} />
-      {t('offline')}
+    <>
+      <TrainingBanner />
+      {!online && (
+        <div role="status" className="flex items-center justify-center gap-2 bg-warn px-4 py-2 text-sm font-semibold text-charcoal">
+          <Icon name="wifiOff" size={16} />
+          {t('offline')}
+        </div>
+      )}
+    </>
+  )
+}
+
+// Shown on every screen of a trainee: practice only, with a Reset button
+export function TrainingBanner() {
+  const training = useTraining()
+  const { t } = useLang()
+  if (!training?.active) return null
+  return (
+    <div role="status" className="flex items-center gap-3 bg-warn px-4 py-2 text-sm text-charcoal">
+      <Icon name="book" size={18} className="shrink-0" />
+      <span className="min-w-0 flex-1 font-medium leading-snug">{t('trainingBanner')}</span>
+      <button
+        type="button"
+        className="min-h-9 shrink-0 cursor-pointer rounded-lg bg-charcoal px-3 text-sm font-semibold text-white hover:bg-charcoal-700"
+        onClick={() => window.confirm(t('confirmTrainingReset')) && training.reset()}
+      >
+        {t('resetTraining')}
+      </button>
     </div>
   )
 }
 
-/* ---------- Page chrome ---------- */
 export function PageHeader({ title, back = true, right }) {
   const navigate = useNavigate()
   const { t } = useLang()

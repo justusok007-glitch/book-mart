@@ -9,6 +9,9 @@
 @theme {
   --font-sans: "Rubik", system-ui, sans-serif;
   --font-urdu: "Noto Nastaliq Urdu", "Rubik", serif;
+  /* Rubik runs heavy: "bold" draws as 600 and "semibold" as 500 */
+  --font-weight-bold: 600;
+  --font-weight-semibold: 500;
 
   /* brand */
   --color-charcoal: #373435;        /* logo dark — primary buttons, headings */

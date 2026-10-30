@@ -6,7 +6,7 @@ import { collection, doc, getDoc, getDocs, setDoc, Timestamp, writeBatch } from 
 import { db } from './firebase'
 
 export const COLLECTIONS = [
-  'settings', 'roles', 'users', 'meta', 'counters',
+  'settings', 'roles', 'users', 'meta', 'counters', 'receiptCounters',
   'categories', 'items', 'variants', 'barcodes', 'itemCosts', 'stockMoves',
   'suppliers', 'supplierLedger', 'purchases',
   'customers', 'customerLedger', 'sales', 'returns', 'dailyStats',

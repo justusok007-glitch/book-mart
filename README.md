@@ -7,7 +7,10 @@ English + Urdu, works offline, roles & permissions set by the Admin.
 
 **Sell screen demo for the client (no login, sample data):** https://justusok007-glitch.github.io/book-mart/#/demo/sell
 
-Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, flat style, 48px touch targets. Lime is only used as a fill with charcoal text on it.
+Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, 48px touch targets, Rubik font,
+charcoal app bar, Home "counter" with today's figures. Lime is only used as a fill with charcoal text on it.
+
+The previous design (before the Oct 2026 redesign) is kept on branch `design-v1` (commit c9fb7ee).
 
 ## Stack
 - React + Vite + Tailwind CSS

@@ -59,9 +59,9 @@ export default function Login() {
         <div className="flex justify-end px-4 pt-4">
           <LangSwitch />
         </div>
-        <div className="mx-auto mt-1 flex max-w-sm flex-col items-center px-6 text-center">
+        <div className="mx-auto mt-3 flex max-w-sm flex-col items-center px-6 text-center">
           <div className="rounded-3xl bg-white px-6 py-4">
-            <img src="./logo.png" alt="Book Mart" className="h-auto w-40" />
+            <img src="./logo.png" alt="Book Mart" className="h-auto w-32" />
           </div>
           <p className="mt-3 text-white/75">{t('tagline')}</p>
         </div>

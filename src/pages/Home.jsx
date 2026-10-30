@@ -75,7 +75,7 @@ function Counter() {
     { label: t('lowStock'), value: ready ? lowList.length : '—', to: '/low-stock', alert: ready && lowList.length > 0 },
   ]
   return (
-    <div className="grid grid-cols-3 divide-x divide-white/15 rtl:divide-x-reverse">
+    <div className="grid grid-cols-3 [&>*+*]:border-s [&>*+*]:border-white/15">
       {stats.map((s) => {
         const body = (
           <>

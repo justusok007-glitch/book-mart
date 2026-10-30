@@ -26,6 +26,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { nextAverage, round2 } from './costing'
+import { dayKey } from './saleMath'
 
 /* ================= suppliers ================= */
 
@@ -68,6 +69,11 @@ export function paySupplier({ supplierId, amount, method = 'cash', note = '', us
     byName: user.name || '',
     at: serverTimestamp(),
   })
+  // cash paid from the drawer counts in the daily closing
+  if (method === 'cash') {
+    const day = dayKey()
+    batch.set(doc(db, 'dailyStats', day), { day, supplierCash: increment(amt), updatedAt: serverTimestamp() }, { merge: true })
+  }
   batch.commit()
 }
 
@@ -144,6 +150,10 @@ export async function recordPurchase({ supplier, billNo, note, lines, paid, payT
       byName: user.name || '',
       at: stamp,
     })
+    if (paidAmt > 0) {
+      const day = dayKey()
+      tx.set(doc(db, 'dailyStats', day), { day, supplierCash: increment(paidAmt), updatedAt: stamp }, { merge: true })
+    }
     if (supplier?.id) {
       tx.update(doc(db, 'suppliers', supplier.id), { balance: increment(due), updatedAt: stamp })
       tx.set(doc(collection(db, 'supplierLedger')), {

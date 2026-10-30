@@ -119,10 +119,11 @@ export const FEATURES = [
   { key: 'customers', group: 'people', perm: 'manage_customers', icon: 'user', en: 'Customers (Udhaar)', ur: 'گاہک (ادھار)', ready: true, path: '/customers' },
   { key: 'suppliers', group: 'people', perm: 'manage_suppliers', icon: 'truck', en: 'Suppliers', ur: 'سپلائرز', ready: true, path: '/suppliers' },
 
-  { key: 'closing', group: 'money', perm: 'daily_closing', icon: 'clipboard', en: 'Daily Closing', ur: 'روزانہ حساب', phase: 6 },
-  { key: 'cash-out', group: 'money', perm: 'cash_out', icon: 'cash', en: 'Cash Out', ur: 'کیش آؤٹ', phase: 6 },
-  { key: 'expenses', group: 'money', perm: 'expenses', icon: 'receipt', en: 'Expenses', ur: 'اخراجات', phase: 6 },
-  { key: 'investment', group: 'money', perm: 'investment', icon: 'trend', en: 'Investment', ur: 'سرمایہ کاری', phase: 6 },
+  { key: 'closing', group: 'money', perm: 'daily_closing', icon: 'clipboard', en: 'Daily Closing', ur: 'روزانہ حساب', ready: true, path: '/closing' },
+  { key: 'cash-out', group: 'money', perm: 'cash_out', icon: 'cash', en: 'Cash Out', ur: 'کیش آؤٹ', ready: true, path: '/cash-out' },
+  { key: 'cash-out-summary', group: 'money', perm: 'view_cash_out_summary', icon: 'chart', en: 'Cash-out Summary', ur: 'کیش آؤٹ کا خلاصہ', ready: true, path: '/cash-out/summary' },
+  { key: 'expenses', group: 'money', perm: 'expenses', icon: 'receipt', en: 'Expenses', ur: 'اخراجات', ready: true, path: '/expenses' },
+  { key: 'investment', group: 'money', perm: 'investment', icon: 'trend', en: 'Investment', ur: 'سرمایہ کاری', ready: true, path: '/investment' },
 
   { key: 'profit-loss', group: 'reports', perm: 'view_profit_loss', icon: 'chart', en: 'Profit & Loss', ur: 'نفع و نقصان', phase: 7 },
   { key: 'reports', group: 'reports', perm: 'view_reports', icon: 'chart', en: 'Reports', ur: 'رپورٹس', phase: 7 },

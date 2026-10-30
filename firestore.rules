@@ -152,7 +152,7 @@ service cloud.firestore {
     match /dailyStats/{day} {
       allow read: if can('daily_closing') || can('view_reports') || can('view_profit_loss') || can('view_sales');
       allow create, update: if can('sell') || can('sale_returns') || can('expenses') || can('cash_out')
-                            || can('receive_payments') || can('investment');
+                            || can('receive_payments') || can('investment') || can('buy') || can('pay_suppliers');
     }
 
     // ---------- customers & udhaar ----------
@@ -172,6 +172,37 @@ service cloud.firestore {
         || (request.resource.data.type == 'payment' && can('receive_payments'))
         || (request.resource.data.type == 'return'  && can('sale_returns'))
       );
+    }
+
+    // ---------- money (Phase 6) ----------
+    // A wrong entry can be undone by the person who made it within a day, or by the Admin any time.
+    function undoable() {
+      return isAdmin() || (resource.data.by == request.auth.uid && request.time < resource.data.at + duration.value(1, 'd'));
+    }
+    function newEntry() {
+      return request.resource.data.by == request.auth.uid && request.resource.data.amount > 0;
+    }
+
+    match /expenses/{id} {
+      allow read: if can('expenses') || can('daily_closing') || can('view_profit_loss') || can('view_reports');
+      allow create: if can('expenses') && newEntry();
+      allow delete: if can('expenses') && undoable();
+    }
+    // owner cash out: who took it, when, how much
+    match /cashOuts/{id} {
+      allow read: if can('cash_out') || can('view_cash_out_summary') || can('daily_closing');
+      allow create: if can('cash_out') && newEntry();
+      allow delete: if can('cash_out') && undoable();
+    }
+    match /investments/{id} {
+      allow read: if can('investment') || can('view_profit_loss');
+      allow create: if can('investment') && newEntry();
+      allow delete: if can('investment') && undoable();
+    }
+    // one closing per day; re-counting updates it
+    match /closings/{day} {
+      allow read: if can('daily_closing') || can('view_reports');
+      allow create, update: if can('daily_closing') && request.resource.data.by == request.auth.uid;
     }
 
     // Everything else is closed until its phase adds rules.

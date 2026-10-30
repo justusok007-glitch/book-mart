@@ -69,7 +69,7 @@ function TodayStrip() {
       sub: today?.returnsTotal > 0 ? `${t('returnsShort')} Rs ${Number(today.returnsTotal).toLocaleString('en-PK')}` : null,
       to: can('view_sales') ? '/sales' : null,
     },
-    { label: t('cashReceivedToday'), icon: 'cash', value: money(today?.cashIn) },
+    { label: t('cashReceivedToday'), icon: 'cash', value: money(today?.cashIn), to: can('daily_closing') ? '/closing' : null },
     { label: t('lowStock'), icon: 'alert', value: ready ? lowList.length : null, to: '/low-stock', danger: ready && lowList.length > 0 },
   ]
   return (

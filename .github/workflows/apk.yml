@@ -1,0 +1,98 @@
+name: Android APK
+
+# Builds the Android app from the same code as the web preview and puts it on the
+# Releases page: https://github.com/<owner>/book-mart/releases/tag/apk-latest
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+
+      - name: Create the Android project
+        run: npx cap add android
+
+      - name: App icon, camera permission, version number
+        run: |
+          cp -r resources/android/res/. android/app/src/main/res/
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.CAMERA" />#' android/app/src/main/AndroidManifest.xml
+          VERSION=$(node -p 'require("./package.json").version')
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"$VERSION (${{ github.run_number }})\"/" android/app/build.gradle
+          grep -n "CAMERA" android/app/src/main/AndroidManifest.xml
+          grep -n "versionCode\|versionName" android/app/build.gradle
+
+      - run: npx cap sync android
+
+      # The same signing key must be used for every build, otherwise a new APK will not
+      # install over the old one. Preferred: repository secrets ANDROID_KEYSTORE_B64 + ANDROID_KEYSTORE_PASS.
+      # Without them a key is made once and kept in the Actions cache.
+      - name: Signing key from cache
+        uses: actions/cache@v4
+        with:
+          path: keystore
+          key: bookmart-release-keystore-v1
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+        run: |
+          mkdir -p keystore
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > keystore/release.jks
+            echo "${KEYSTORE_PASS}" > keystore/pass
+          elif [ ! -f keystore/release.jks ]; then
+            PASS=$(openssl rand -hex 16)
+            echo "$PASS" > keystore/pass
+            keytool -genkeypair -keystore keystore/release.jks -alias bookmart -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$PASS" -keypass "$PASS" -dname "CN=Book Mart, O=Book Mart, L=Okara, C=PK"
+          fi
+
+      - name: Build
+        run: cd android && ./gradlew assembleRelease --no-daemon -q
+
+      - name: Sign
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          PASS=$(cat keystore/pass)
+          "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks keystore/release.jks --ks-pass "pass:$PASS" --key-pass "pass:$PASS" --out book-mart.apk aligned.apk
+          "$BT/apksigner" verify book-mart.apk
+          ls -la book-mart.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: book-mart-apk
+          path: book-mart.apk
+
+      - name: Put the APK on the Releases page
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest book-mart.apk \
+            --target "${{ github.sha }}" \
+            --title "Book Mart Android app (build ${{ github.run_number }})" \
+            --notes "Download book-mart.apk on the phone and open it to install. Built from ${{ github.sha }}." \
+            --latest

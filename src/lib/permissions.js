@@ -130,6 +130,6 @@ export const FEATURES = [
 
   { key: 'users', group: 'admin', perm: 'manage_users', icon: 'users', en: 'Users', ur: 'صارفین', ready: true, path: '/users' },
   { key: 'roles', group: 'admin', perm: 'manage_roles', icon: 'shield', en: 'Roles & Permissions', ur: 'عہدے اور اختیارات', ready: true, path: '/roles' },
-  { key: 'backup', group: 'admin', perm: 'backup_restore', icon: 'lock', en: 'Backup & Restore', ur: 'بیک اپ اور بحالی', phase: 8 },
+  { key: 'backup', group: 'admin', perm: 'backup_restore', icon: 'lock', en: 'Backup & Restore', ur: 'بیک اپ اور بحالی', ready: true, path: '/backup' },
   { key: 'settings', group: 'admin', perm: null, icon: 'sliders', en: 'Settings', ur: 'ترتیبات', ready: true, path: '/settings' },
 ]

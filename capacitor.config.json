@@ -1,0 +1,8 @@
+{
+  "appId": "pk.bookmart.app",
+  "appName": "Book Mart",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#f5f6f1"
+  }
+}

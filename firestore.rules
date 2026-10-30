@@ -205,6 +205,12 @@ service cloud.firestore {
       allow create, update: if can('daily_closing') && request.resource.data.by == request.auth.uid;
     }
 
-    // Everything else is closed until its phase adds rules.
+    // ---------- backup & restore (Phase 8) ----------
+    // The developer Admin can read and write every document (needed to back up and restore the whole shop).
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // Everything else is closed.
   }
 }

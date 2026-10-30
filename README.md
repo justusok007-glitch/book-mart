@@ -12,7 +12,7 @@ Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, fl
 ## Stack
 - React + Vite + Tailwind CSS
 - Firebase Authentication (username/password) + Cloud Firestore with offline cache
-- Capacitor (later) to package the Android APK
+- Capacitor packages the Android APK (built by `.github/workflows/apk.yml`)
 
 ## Build phases
 1. ✅ Setup, login, roles & permissions, users, settings, English/Urdu
@@ -22,7 +22,18 @@ Design: logo colours (charcoal `#373435` + lime `#9fcc47`), light theme only, fl
 5. ✅ Customers (udhaar account, receive payments, WhatsApp reminders) and returns (stock back, cash or account refund, damaged option)
 6. ✅ Expenses, owner cash-out (who/when) & summary, investment & business position, daily closing (cash count, short/extra)
 7. ✅ Reports — profit & loss, sales by day/month, salesmen, top items, stock value by category
-8. Backup & restore, testing, APK release
+8. ✅ Backup & restore (Admin), RawBT direct printing, Android APK (Capacitor) on the Releases page
+
+## Android app
+Every push builds `book-mart.apk` and puts it on the Releases page:
+https://github.com/justusok007-glitch/book-mart/releases/download/apk-latest/book-mart.apk
+
+Signing: add repository secrets `ANDROID_KEYSTORE_B64` and `ANDROID_KEYSTORE_PASS` for a permanent key. Without them the
+workflow makes a key once and keeps it in the Actions cache (if that cache expires, uninstall the old app once before installing).
+
+## Printing
+Settings → Receipt printer → "Print directly with RawBT": Print sends an ESC/POS receipt (58mm, 32 columns) to the RawBT app,
+which prints on the paired Bluetooth printer. Off = the phone's print screen.
 
 ## How access works
 - The developer Admin (`saadmalikok@gmail.com`) has every permission and cannot be changed or locked out.

@@ -1,11 +1,12 @@
 // Receipt: on-screen view, 58mm print page, and plain text for WhatsApp/share.
 //
 // Printing: the app opens the phone's print screen with a 58mm-wide receipt.
-// With a Bluetooth thermal printer, install a printer-service app (e.g. RawBT) once —
-// it then appears in the print screen. Direct Bluetooth printing comes with the Android APK.
+// With a Bluetooth thermal printer: install RawBT once and turn on "Print directly with RawBT"
+// in Settings — Print then sends ESC/POS bytes straight to the printer (src/lib/escpos.js).
 
 import { useLang } from '../context/LangContext'
 import { toDate } from '../lib/format'
+import { getPrintMode, isAndroid, receiptBytes, sendToRawbt } from '../lib/escpos'
 
 const money = (n) => Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 2 })
 const when = (sale) => {
@@ -79,6 +80,8 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 
 // 58mm thermal page printed through the phone's print screen
 export function printReceipt(sale, shop, thanks = 'Thank you for shopping!') {
+  // this phone is set to print straight to the Bluetooth printer through RawBT
+  if (getPrintMode() === 'rawbt' && isAndroid()) return sendToRawbt(receiptBytes(sale, shop, thanks, when(sale)))
   const row = (a, b, bold = false) => `<div class="r${bold ? ' b' : ''}"><span>${esc(a)}</span><span>${esc(b)}</span></div>`
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(sale.receiptNo)}</title>
 <style>

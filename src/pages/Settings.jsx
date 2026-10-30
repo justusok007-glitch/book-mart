@@ -4,9 +4,51 @@ import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
 import { db, emailToUsername } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
-import { Button, Card, Field, Notice, Page } from '../components/ui'
+import { Button, Card, Field, Notice, Page, Toggle } from '../components/ui'
+import { getPrintMode, isAndroid, isNativeApp, setPrintMode } from '../lib/escpos'
+import { printReceipt } from '../components/Receipt'
+import { useShopSettings } from '../lib/selling'
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
+
+const APK_URL = 'https://github.com/justusok007-glitch/book-mart/releases/download/apk-latest/book-mart.apk'
+
+function PrinterChoice() {
+  const { t } = useLang()
+  const shop = useShopSettings()
+  const [mode, setMode] = useState(getPrintMode)
+  const sample = {
+    receiptNo: 'TEST-0001',
+    byName: 'Book Mart',
+    clientAt: Date.now(),
+    lines: [{ itemName: 'Test print', variantName: '', qty: 1, price: 0 }],
+    subtotal: 0,
+    discount: 0,
+    total: 0,
+    due: 0,
+  }
+  return (
+    <div className="mt-4 space-y-3 border-t border-line pt-4">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-semibold">{t('printDirectRawbt')}</span>
+        <Toggle
+          checked={mode === 'rawbt'}
+          label={t('printDirectRawbt')}
+          onChange={(on) => {
+            const m = on ? 'rawbt' : 'system'
+            setPrintMode(m)
+            setMode(m)
+          }}
+        />
+      </div>
+      <p className="text-sm text-muted">{t('printerApkNote')}</p>
+      {mode === 'rawbt' && !isAndroid() && <Notice type="warn">{t('rawbtMissing')}</Notice>}
+      <Button variant="secondary" className="w-full" onClick={() => printReceipt(sample, shop, t('receiptThanks'))}>
+        <Icon name="printer" size={18} /> {t('testPrint')}
+      </Button>
+    </div>
+  )
+}
 
 function Section({ icon, title, children }) {
   return (
@@ -131,8 +173,20 @@ export default function Settings() {
             <li>{t('printerStep2')}</li>
             <li>{t('printerStep3')}</li>
           </ol>
-          <p className="mt-3 text-sm text-muted">{t('printerApkNote')}</p>
+          <PrinterChoice />
         </Section>
+
+        {!isNativeApp() && (
+          <Section icon="package" title={t('androidApp')}>
+            <p className="mb-3 text-sm text-muted">{t('androidAppHint')}</p>
+            <a
+              href={APK_URL}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-700"
+            >
+              <Icon name="package" size={18} /> {t('downloadApk')}
+            </a>
+          </Section>
+        )}
 
         <Section icon="lock" title={t('changePassword')}>
           <ChangePassword />

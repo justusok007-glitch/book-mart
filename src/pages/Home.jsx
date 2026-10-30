@@ -31,27 +31,26 @@ function SellBlock({ f }) {
   )
 }
 
-// one menu row: icon, name, arrow
-function MenuRow({ f }) {
+// one rectangular tile: icon on top, name below
+function Tile({ f }) {
   const { pick, t } = useLang()
   return (
-    <li>
-      <Link
-        to={featurePath(f)}
-        className="flex min-h-[60px] items-center gap-3.5 px-4 py-2.5 transition-colors duration-150 hover:bg-lime-50 active:bg-lime-100"
-      >
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${f.ready ? 'bg-lime-100 text-charcoal' : 'bg-paper text-muted'}`}>
-          <Icon name={f.icon} size={20} />
+    <Link
+      to={featurePath(f)}
+      className="flex min-h-[104px] flex-col justify-between gap-3 rounded-2xl border border-line bg-white p-4 transition-colors duration-150 hover:border-charcoal-500 active:bg-lime-50"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${f.ready ? 'bg-lime-100 text-charcoal' : 'bg-paper text-muted'}`}>
+          <Icon name={f.icon} size={22} />
         </span>
-        <span className={`min-w-0 flex-1 font-medium leading-snug ${f.ready ? 'text-ink' : 'text-muted'}`}>{pick(f)}</span>
         {!f.ready && (
           <Badge>
             {t('phase')} <span className="latin ms-1">{f.phase}</span>
           </Badge>
         )}
-        <Icon name="chevron" size={18} className="shrink-0 text-muted rtl:rotate-180" />
-      </Link>
-    </li>
+      </div>
+      <span className={`font-medium leading-snug ${f.ready ? 'text-ink' : 'text-muted'}`}>{pick(f)}</span>
+    </Link>
   )
 }
 
@@ -144,22 +143,20 @@ export default function Home() {
         )}
         {!sell && <div className="h-5" />}
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          {FEATURE_GROUPS.map((g) => {
-            const items = visible.filter((f) => f.group === g.key)
-            if (!items.length) return null
-            return (
-              <section key={g.key}>
-                <h2 className="mb-2 px-1 text-[15px] font-semibold text-charcoal">{pick(g)}</h2>
-                <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
-                  {items.map((f) => (
-                    <MenuRow key={f.key} f={f} />
-                  ))}
-                </ul>
-              </section>
-            )
-          })}
-        </div>
+        {FEATURE_GROUPS.map((g) => {
+          const items = visible.filter((f) => f.group === g.key)
+          if (!items.length) return null
+          return (
+            <section key={g.key} className="mb-7">
+              <h2 className="mb-2.5 px-1 text-[15px] font-semibold text-charcoal">{pick(g)}</h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {items.map((f) => (
+                  <Tile key={f.key} f={f} />
+                ))}
+              </div>
+            </section>
+          )
+        })}
       </main>
     </div>
   )

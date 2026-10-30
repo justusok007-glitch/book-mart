@@ -58,11 +58,29 @@ export function waNumber(phone = '') {
 
 /* ================= returns ================= */
 
-export async function findSaleByReceipt(receiptNo) {
-  const code = receiptNo.trim().toUpperCase()
-  if (!code) return null
-  const snap = await getDocs(query(collection(db, 'sales'), where('receiptNo', '==', code), limit(1)))
-  return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() }
+/**
+ * Find sales by receipt number: the whole number (261030-7K3F) or just its last 4 characters (7K3F).
+ * Returns a list, newest first (two old receipts can share the same last 4).
+ */
+export async function findSalesByReceipt(input) {
+  const code = String(input || '').toUpperCase().replace(/[#\s]/g, '')
+  if (!code) return []
+  const full = /^\d{6}-[A-Z0-9]{4}$/.test(code)
+  const found = new Map()
+  const add = (snap) => snap.docs.forEach((d) => found.set(d.id, { id: d.id, ...d.data() }))
+  if (full) add(await getDocs(query(collection(db, 'sales'), where('receiptNo', '==', code), limit(5))))
+  else {
+    const short = code.slice(-4)
+    add(await getDocs(query(collection(db, 'sales'), where('receiptShort', '==', short), limit(20))))
+    // sales made before the short code was stored: look through the last 6 months
+    const from = dayKey(new Date(Date.now() - 183 * 864e5))
+    const older = await getDocs(query(collection(db, 'sales'), where('day', '>=', from)))
+    older.docs.forEach((d) => {
+      const r = d.data().receiptNo || ''
+      if (r.endsWith(short) && (code.length <= 4 || r.endsWith(code))) found.set(d.id, { id: d.id, ...d.data() })
+    })
+  }
+  return [...found.values()].sort((a, b) => (b.clientAt || 0) - (a.clientAt || 0))
 }
 
 export async function fetchRecentReturns(max = 30) {

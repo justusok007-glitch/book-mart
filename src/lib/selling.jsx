@@ -91,8 +91,10 @@ export function recordSale({ cartLines, discount, payType, paidInput, customer, 
   const now = new Date()
   const day = dayKey(now)
   const ref = doc(collection(db, 'sales'))
+  const receiptNo = makeReceiptNo(now)
   const sale = {
-    receiptNo: makeReceiptNo(now),
+    receiptNo,
+    receiptShort: receiptNo.slice(-4), // last 4 characters: enough to find the sale for a return
     day,
     lines,
     ...totals,

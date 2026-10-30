@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
-import { fetchRecentReturns, findSaleByReceipt, recordReturn, RETURN_REASONS } from '../lib/customers'
+import { fetchRecentReturns, findSalesByReceipt, recordReturn, RETURN_REASONS } from '../lib/customers'
 import { fetchSalesForDay } from '../lib/selling'
 import { dayKey, returnable, returnValue } from '../lib/saleMath'
 import { fmtDate, toDate } from '../lib/format'
@@ -121,6 +121,7 @@ export default function Returns() {
   const [code, setCode] = useState('')
   const [searching, setSearching] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [matches, setMatches] = useState(null)
   const [today, setToday] = useState(null)
   const [recent, setRecent] = useState(null)
 
@@ -136,10 +137,12 @@ export default function Returns() {
   async function find(e) {
     e.preventDefault()
     setNotFound(false)
+    setMatches(null)
     setSearching(true)
     try {
-      const sale = await findSaleByReceipt(code)
-      if (sale) navigate(`/sales/${sale.id}?return=1`)
+      const list = await findSalesByReceipt(code)
+      if (list.length === 1) navigate(`/sales/${list[0].id}?return=1`)
+      else if (list.length > 1) setMatches(list)
       else setNotFound(true)
     } catch {
       setNotFound(true)
@@ -160,9 +163,13 @@ export default function Returns() {
                   className="field latin text-lg uppercase"
                   dir="ltr"
                   autoCapitalize="characters"
-                  placeholder="261029-7K3F"
+                  placeholder="7K3F"
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => {
+                    setCode(e.target.value)
+                    setNotFound(false)
+                    setMatches(null)
+                  }}
                 />
                 <Button type="submit" disabled={!code.trim() || searching}>
                   <Icon name="search" size={20} />
@@ -170,6 +177,26 @@ export default function Returns() {
               </div>
             </Field>
             {notFound && <Notice>{t('receiptNotFound')}</Notice>}
+            {matches && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">{t('severalReceipts')}</p>
+                {matches.map((m) => (
+                  <Link
+                    key={m.id}
+                    to={`/sales/${m.id}?return=1`}
+                    className="flex min-h-16 items-center gap-3 rounded-2xl border-[1.5px] border-line bg-white px-4 py-2 hover:border-charcoal-500 active:bg-paper"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="latin font-semibold">#{m.receiptNo}</div>
+                      <div className="truncate text-sm text-muted">
+                        <span className="latin">{fmtDate(m.at || new Date(m.clientAt || 0))}</span> · {m.lines.map((l) => pick({ en: l.itemName, ur: l.itemNameUr })).join(', ')}
+                      </div>
+                    </div>
+                    <Rs value={m.total} className="font-bold" />
+                  </Link>
+                ))}
+              </div>
+            )}
           </form>
         </Card>
 

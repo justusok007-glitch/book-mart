@@ -43,5 +43,5 @@ export function StockNumber({ value, low, unit }) {
 export function ItemPhoto({ item, className = '', fallback = null }) {
   const src = useItemImage(item)
   if (!src) return fallback
-  return <img src={src} alt="" aria-hidden="true" draggable={false} className={`shrink-0 bg-paper object-cover ${className}`} />
+  return <img src={src} alt="" aria-hidden="true" draggable={false} className={`shrink-0 bg-white ${className.includes("object-contain") ? "" : "object-cover"} ${className}`} />
 }

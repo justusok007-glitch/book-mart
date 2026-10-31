@@ -437,10 +437,11 @@ export default function SellPreview({ demo = false }) {
                       </span>
                     )}
                     {withPhotos && (
-                      <span className="mb-2 block h-20 w-full overflow-hidden rounded-xl bg-paper">
+                      <span className="mb-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-white">
+                        {/* whole square photo, never cropped */}
                         <ItemPhoto
                           item={item}
-                          className="h-full w-full"
+                          className="aspect-square h-full rounded-lg object-contain"
                           fallback={
                             <span className="flex h-full w-full items-center justify-center">
                               <DotStack variants={item.variants} />

@@ -115,6 +115,11 @@ service cloud.firestore {
         || (request.resource.data.type == 'return'   && can('sale_returns'))
       );
     }
+    // item photos (small, one per item); everyone in the shop can see them
+    match /itemImages/{id} {
+      allow read: if canReadShop();
+      allow write: if can('manage_items');
+    }
     match /counters/barcode {
       allow read, write: if can('manage_items');
     }

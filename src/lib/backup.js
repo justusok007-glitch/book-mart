@@ -7,7 +7,7 @@ import { db } from './firebase'
 
 export const COLLECTIONS = [
   'settings', 'roles', 'users', 'meta', 'counters', 'receiptCounters',
-  'categories', 'items', 'variants', 'barcodes', 'itemCosts', 'stockMoves',
+  'categories', 'items', 'variants', 'barcodes', 'itemCosts', 'itemImages', 'stockMoves',
   'suppliers', 'supplierLedger', 'purchases',
   'customers', 'customerLedger', 'sales', 'returns', 'dailyStats',
   'expenses', 'cashOuts', 'investments', 'closings',
@@ -49,11 +49,12 @@ export function inspectBackup(data) {
 
 /* ---------- make a backup ---------- */
 
-export async function makeBackup({ by, onProgress } = {}) {
+export async function makeBackup({ by, onProgress, includeImages = true } = {}) {
   const out = { app: 'book-mart', format: 1, createdAt: Date.now(), by: by || '', collections: {} }
   let i = 0
   for (const name of COLLECTIONS) {
     onProgress?.(i++ / COLLECTIONS.length, name)
+    if (name === 'itemImages' && !includeImages) continue // a restore then keeps the photos already in the shop
     const snap = await getDocs(collection(db, name))
     out.collections[name] = snap.docs.map((d) => ({ id: d.id, data: encode(d.data()) }))
   }

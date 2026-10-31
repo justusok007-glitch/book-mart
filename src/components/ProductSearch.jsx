@@ -8,6 +8,7 @@ import { useLang } from '../context/LangContext'
 import { Rs } from './ui'
 import Icon from './Icon'
 import { beepError, beepOk } from '../lib/beep'
+import { ItemPhoto } from './ItemBits'
 
 const norm = (s) => (s || '').toString().toLowerCase().normalize('NFKC').trim()
 const MAX = 8
@@ -186,13 +187,19 @@ export default function ProductSearch({ entries, qtyOf = {}, onAdd, stockOf = nu
                       i === active ? 'bg-paper' : 'bg-white'
                     } active:bg-lime-50`}
                   >
-                    {e.variant.dot ? (
-                      <span aria-hidden="true" className="h-5 w-5 shrink-0 rounded-full border border-black/15" style={{ background: e.variant.dot }} />
-                    ) : (
-                      <span aria-hidden="true" className="flex h-5 w-5 shrink-0 items-center justify-center text-muted">
-                        <Icon name="package" size={18} />
-                      </span>
-                    )}
+                    <ItemPhoto
+                      item={e.item}
+                      className="h-10 w-10 rounded-lg"
+                      fallback={
+                      e.variant.dot ? (
+                        <span aria-hidden="true" className="h-5 w-5 shrink-0 rounded-full border border-black/15" style={{ background: e.variant.dot }} />
+                      ) : (
+                        <span aria-hidden="true" className="flex h-5 w-5 shrink-0 items-center justify-center text-muted">
+                          <Icon name="package" size={18} />
+                        </span>
+                      )
+                      }
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="line-clamp-2 font-semibold leading-snug text-ink">
                         <Highlight text={pick(e.item)} tokens={tokens} />

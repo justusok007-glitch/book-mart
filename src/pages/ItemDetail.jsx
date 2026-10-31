@@ -6,7 +6,7 @@ import { fetchMoves, useCatalog } from '../lib/catalog'
 import { UNITS } from '../lib/colors'
 import { Badge, Button, Card, EmptyState, Field, Notice, Page, Rs, SectionTitle, Segmented, Sheet, Spinner } from '../components/ui'
 import { ADJUST_REASONS, adjustStock } from '../lib/purchasing'
-import { Dot, StockNumber } from '../components/ItemBits'
+import { Dot, StockNumber, ItemPhoto } from '../components/ItemBits'
 import Icon from '../components/Icon'
 
 const MOVE_LABEL = {
@@ -82,11 +82,16 @@ export default function ItemDetail() {
 
         {/* summary */}
         <Card className="p-5">
-          <div className="text-sm text-muted">
-            {pick(catById[item.catId] || {})} › {pick(catById[item.subId] || {})}
+          <div className="flex items-start gap-4">
+            <ItemPhoto item={item} className="h-20 w-20 rounded-2xl" />
+            <div className="min-w-0">
+              <div className="text-sm text-muted">
+                {pick(catById[item.catId] || {})} › {pick(catById[item.subId] || {})}
+              </div>
+              <h2 className="mt-1 text-xl font-bold text-charcoal">{pick(item)}</h2>
+              {item.ur && item.en && <div className="text-muted">{pick({ en: item.ur, ur: item.en })}</div>}
+            </div>
           </div>
-          <h2 className="mt-1 text-xl font-bold text-charcoal">{pick(item)}</h2>
-          {item.ur && item.en && <div className="text-muted">{pick({ en: item.ur, ur: item.en })}</div>}
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-lime-50 p-3">

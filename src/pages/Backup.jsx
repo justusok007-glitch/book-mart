@@ -4,7 +4,7 @@ import { useLang } from '../context/LangContext'
 import { fetchLastBackup, inspectBackup, makeBackup, noteBackupMade, restoreBackup, saveBackupFile } from '../lib/backup'
 import { errorText } from '../lib/errors'
 import { fmtDate } from '../lib/format'
-import { Button, Card, Field, Notice, Page, SectionTitle, useOnline } from '../components/ui'
+import { Button, Card, Field, Notice, Page, SectionTitle, useOnline, Toggle } from '../components/ui'
 import Icon from '../components/Icon'
 import { useCatalog } from '../lib/catalog'
 import { downloadText, inventoryCsv, inventoryFileName } from '../lib/inventoryCsv'
@@ -33,6 +33,7 @@ export default function Backup() {
   const [error, setError] = useState('')
   const [file, setFile] = useState(null) // { name, data, info }
   const [confirm, setConfirm] = useState('')
+  const [withPhotos, setWithPhotos] = useState(true)
   const input = useRef(null)
   const catalog = useCatalog()
 
@@ -47,7 +48,7 @@ export default function Backup() {
     setError('')
     setBusy({ kind: 'backup', value: 0, label: t('readingData') })
     try {
-      const data = await makeBackup({ by: displayName, onProgress: (v) => setBusy({ kind: 'backup', value: v, label: t('readingData') }) })
+      const data = await makeBackup({ by: displayName, includeImages: withPhotos, onProgress: (v) => setBusy({ kind: 'backup', value: v, label: t('readingData') }) })
       const res = await saveBackupFile(data, { share })
       if (res !== 'cancelled') {
         noteBackupMade(data).catch(() => {})
@@ -130,6 +131,13 @@ export default function Backup() {
               </div>
             </div>
             <p className="text-sm text-muted">{t('backupHint')}</p>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-line ps-4 pe-1">
+              <div className="py-2">
+                <div className="text-sm font-semibold">{t('includePhotos')}</div>
+                <div className="text-xs text-muted">{t('includePhotosHint')}</div>
+              </div>
+              <Toggle checked={withPhotos} onChange={setWithPhotos} label={t('includePhotos')} />
+            </div>
             {busy?.kind === 'backup' ? (
               <Progress value={busy.value} label={busy.label} />
             ) : (

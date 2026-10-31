@@ -645,4 +645,13 @@ export const STRINGS = {
   practiceData: { en: 'Practice data', ur: 'مشق کا ڈیٹا' },
   practiceCopiedOn: { en: 'Copied from the shop on', ur: 'دکان سے کاپی کی تاریخ' },
   trainingBadge: { en: 'Training', ur: 'تربیت' },
+  // item photos
+  itemPhoto: { en: 'Photo', ur: 'تصویر' },
+  addPhoto: { en: 'Take / choose photo', ur: 'تصویر لیں / منتخب کریں' },
+  changePhoto: { en: 'Change photo', ur: 'تصویر بدلیں' },
+  remove: { en: 'Remove', ur: 'ہٹائیں' },
+  photoHint: { en: 'Shown in Sell to find items quickly. Made small automatically.', ur: 'فروخت میں چیز جلد پہچاننے کے لیے۔ خود بخود چھوٹی ہو جاتی ہے۔' },
+  photoFailed: { en: 'This photo could not be read. Try another one.', ur: 'یہ تصویر نہیں پڑھی جا سکی۔ کوئی اور آزمائیں۔' },
+  includePhotos: { en: 'Include item photos', ur: 'اشیاء کی تصاویر شامل کریں' },
+  includePhotosHint: { en: 'Photos make the file bigger. Untick for a small file to share on WhatsApp.', ur: 'تصاویر سے فائل بڑی ہو جاتی ہے۔ واٹس ایپ پر بھیجنے کے لیے چھوٹی فائل چاہیے تو نشان ہٹا دیں۔' },
 }

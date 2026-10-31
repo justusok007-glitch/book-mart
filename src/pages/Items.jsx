@@ -6,7 +6,7 @@ import { useCatalog } from '../lib/catalog'
 import { matchScore, norm, tokenize } from '../lib/search'
 import { UNITS } from '../lib/colors'
 import { Badge, Button, EmptyState, IconButton, Page, Rs, Spinner } from '../components/ui'
-import { DotStack, StockNumber } from '../components/ItemBits'
+import { DotStack, ItemPhoto, StockNumber } from '../components/ItemBits'
 import Icon from '../components/Icon'
 
 const chip = (active, tone = 'dark') =>
@@ -166,7 +166,7 @@ export default function Items() {
                   low ? 'border-danger/40' : 'border-line'
                 } ${hidden ? 'opacity-60' : ''}`}
               >
-                <DotStack variants={vs} />
+                <ItemPhoto item={i} className="h-11 w-11 rounded-xl" fallback={<DotStack variants={vs} />} />
                 <div className="min-w-0 flex-1">
                   <div className="line-clamp-2 font-semibold leading-snug">{pick(i)}</div>
                   <div className="flex flex-wrap items-center gap-x-2 text-sm text-muted">

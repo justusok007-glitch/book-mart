@@ -21,6 +21,7 @@ import { buildCatalog, CatalogContext, CatalogProvider } from '../lib/catalog'
 import { TrainingProvider } from '../context/TrainingContext'
 import { TRAINING_BLOCKED } from '../lib/permissions'
 import * as fb from '../lib/firebase'
+import * as images from '../lib/images'
 import { collection, doc, getDocs, writeBatch } from 'firebase/firestore'
 
 const fakeAuth = {
@@ -72,10 +73,13 @@ const variants = [
   v('v12', 'i6', 'Standard', 'عام', null, 9, '8961000000059', 0),
   v('v13', 'i7', 'Standard', 'عام', null, 0, null, 0),
 ]
+// ?photos=1 → some items have a photo (the test puts the pictures into the phone store first)
+if (new URLSearchParams(location.search).has('photos')) for (const it of items) if (['i1', 'i2', 'i4'].includes(it.id)) it.imageV = 1
 const costs = { i1: { avgCost: 21.5, lastCost: 22 }, i4: { avgCost: 92, lastCost: 95 } }
 
 // test helpers for the trainee check (only in this harness)
 window.__fb = { fb, collection, doc, getDocs, writeBatch }
+window.__images = images
 // put the sample shop into the (offline) "real" database cache, as if it came from Firebase
 window.__seedReal = () => {
   const b = writeBatch(fb.realDb)

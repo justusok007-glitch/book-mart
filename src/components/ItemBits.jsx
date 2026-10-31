@@ -1,5 +1,6 @@
 // Small shared pieces for item lists
 import Icon from './Icon'
+import { useItemImage } from '../lib/images'
 
 export function Dot({ color, size = 20 }) {
   return (
@@ -36,4 +37,11 @@ export function StockNumber({ value, low, unit }) {
       {unit && <span className="ms-1 text-sm font-normal text-muted">{unit}</span>}
     </span>
   )
+}
+
+// the item's photo (if it has one), otherwise `fallback`
+export function ItemPhoto({ item, className = '', fallback = null }) {
+  const src = useItemImage(item)
+  if (!src) return fallback
+  return <img src={src} alt="" aria-hidden="true" draggable={false} className={`shrink-0 bg-paper object-cover ${className}`} />
 }

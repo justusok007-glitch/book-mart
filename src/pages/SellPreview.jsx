@@ -10,6 +10,7 @@ import { ALL_VARIANTS, SAMPLE_CATALOG, SAMPLE_CUSTOMERS } from '../lib/sampleCat
 import { useCatalog } from '../lib/catalog'
 import { Viewfinder } from '../components/BarcodeScanner'
 import { beepError, beepOk } from '../lib/beep'
+import { DotStack, ItemPhoto } from '../components/ItemBits'
 import { Badge, Button, EmptyState, Field, IconButton, Notice, OfflineBanner, PageHeader, Rs, Sheet, Spinner } from '../components/ui'
 import Icon from '../components/Icon'
 import { LangSwitch } from './Login'
@@ -415,7 +416,9 @@ export default function SellPreview({ demo = false }) {
 
             {/* 4. Main items */}
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {sub.items.map((item) => {
+              {sub.items.map((item, _i, all) => {
+                // when any item here has a photo, every card gets a photo area so the grid stays even
+                const withPhotos = all.some((x) => x.imageV)
                 const inCart = item.variants.reduce((n, v) => n + (qtyOf[v.id] || 0), 0)
                 const left = item.variants.reduce((n, v) => n + Math.max(0, stockOf(v.id)), 0) - inCart
                 const low = left <= (item.lowStock ?? 0)
@@ -424,17 +427,30 @@ export default function SellPreview({ demo = false }) {
                     key={item.id}
                     onClick={() => tapItem(item)}
                     aria-disabled={live && left <= 0}
-                    className={`relative flex min-h-[124px] cursor-pointer flex-col justify-between rounded-2xl border-[1.5px] bg-white p-4 text-start transition-colors duration-150 hover:border-charcoal-500 active:bg-paper ${
-                      inCart ? 'border-lime' : 'border-line'
-                    } ${live && left <= 0 ? 'opacity-60' : ''}`}
+                    className={`relative flex min-h-[124px] cursor-pointer flex-col justify-between rounded-2xl border-[1.5px] bg-white text-start transition-colors duration-150 hover:border-charcoal-500 active:bg-paper ${
+                      withPhotos ? 'p-2.5' : 'p-4'
+                    } ${inCart ? 'border-lime' : 'border-line'} ${live && left <= 0 ? 'opacity-60' : ''}`}
                   >
                     {inCart > 0 && (
-                      <span key={bump} className="pop latin absolute end-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-lime px-2 text-sm font-bold text-charcoal">
+                      <span key={bump} className="pop latin absolute end-2 top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-lime px-2 text-sm font-bold text-charcoal shadow-sm">
                         {inCart}
                       </span>
                     )}
-                    <span className="pe-8 font-semibold leading-snug text-ink">{pick(item)}</span>
-                    <span className="block">
+                    {withPhotos && (
+                      <span className="mb-2 block h-20 w-full overflow-hidden rounded-xl bg-paper">
+                        <ItemPhoto
+                          item={item}
+                          className="h-full w-full"
+                          fallback={
+                            <span className="flex h-full w-full items-center justify-center">
+                              <DotStack variants={item.variants} />
+                            </span>
+                          }
+                        />
+                      </span>
+                    )}
+                    <span className={`font-semibold leading-snug text-ink ${withPhotos ? 'px-1.5' : 'pe-8'}`}>{pick(item)}</span>
+                    <span className={`block ${withPhotos ? 'px-1.5 pb-0.5' : ''}`}>
                       <span className="block">
                         <Rs value={item.price} className="text-xl font-bold text-charcoal" />
                       </span>
@@ -504,6 +520,7 @@ export default function SellPreview({ demo = false }) {
         {openItem && (
           <>
             <div className="mb-4 flex items-center gap-2 rounded-xl bg-lime-50 px-4 py-3">
+              <ItemPhoto item={openItem} className="me-1 h-14 w-14 rounded-lg" />
               <span className="text-sm font-semibold text-muted">{t('samePrice')}</span>
               <Rs value={openItem.price} className="ms-auto text-xl font-bold text-charcoal" />
               <span className="text-sm text-muted">{t('each')}</span>
@@ -548,7 +565,7 @@ export default function SellPreview({ demo = false }) {
         <ul className="divide-y divide-line">
           {lines.map((l) => (
             <li key={l.key} className="flex items-center gap-3 py-3">
-              <Swatch color={l.variant.dot} />
+              <ItemPhoto item={l.item} className="h-10 w-10 rounded-lg" fallback={<Swatch color={l.variant.dot} />} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold">{pick(l.item)}</div>
                 <div className="text-sm text-muted">

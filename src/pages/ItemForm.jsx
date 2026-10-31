@@ -8,11 +8,68 @@ import { COLOR_PRESETS, UNITS } from '../lib/colors'
 import { Button, Card, EmptyState, Field, IconButton, Notice, Page, Rs, Sheet, Spinner, Toggle } from '../components/ui'
 import BarcodeScanner from '../components/BarcodeScanner'
 import Icon from '../components/Icon'
+import { makeThumb, saveItemImage, useItemImage } from '../lib/images'
 
 const BARCODE_RE = /^[A-Za-z0-9-]{4,32}$/
 const STANDARD = { en: 'Standard', ur: 'عام' }
 let keySeq = 0
 const newKey = () => `r${++keySeq}`
+
+// one photo per item: taken with the camera or chosen from the gallery, made small automatically
+function PhotoPicker({ current, photo, setPhoto }) {
+  const { t } = useLang()
+  const input = useRef(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const shown = photo.changed ? photo.data : current
+  return (
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        onClick={() => input.current?.click()}
+        className="flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-[1.5px] border-dashed border-charcoal-500/40 bg-paper text-muted hover:border-charcoal-500"
+        aria-label={t('itemPhoto')}
+      >
+        {busy ? <Spinner /> : shown ? <img src={shown} alt="" className="h-full w-full object-cover" /> : <Icon name="camera" size={30} />}
+      </button>
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="font-semibold">
+          {t('itemPhoto')} <span className="font-normal text-muted">({t('optional')})</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" size="sm" variant="secondary" onClick={() => input.current?.click()} disabled={busy}>
+            <Icon name="camera" size={16} /> {shown ? t('changePhoto') : t('addPhoto')}
+          </Button>
+          {shown && (
+            <Button type="button" size="sm" variant="danger" onClick={() => setPhoto({ changed: true, data: null })} disabled={busy}>
+              <Icon name="trash" size={16} /> {t('remove')}
+            </Button>
+          )}
+        </div>
+        {error ? <p className="text-sm text-danger">{error}</p> : <p className="text-xs text-muted">{t('photoHint')}</p>}
+      </div>
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (e) => {
+          const f = e.target.files?.[0]
+          e.target.value = ''
+          if (!f) return
+          setBusy(true)
+          setError('')
+          try {
+            setPhoto({ changed: true, data: await makeThumb(f) })
+          } catch {
+            setError(t('photoFailed'))
+          }
+          setBusy(false)
+        }}
+      />
+    </div>
+  )
+}
 
 function Section({ title, hint, children, right }) {
   return (
@@ -78,6 +135,8 @@ export default function ItemForm() {
   const { ready, categories, subsOf, itemById, variantsOf, costs } = useCatalog()
   const editing = !!id
   const existing = editing ? itemById[id] : null
+  const currentPhoto = useItemImage(existing)
+  const [photo, setPhoto] = useState({ changed: false, data: null })
   const originalVariants = useMemo(() => (editing ? variantsOf(id, true) : []), [editing, id, variantsOf])
   const showCost = can('view_cost_price')
 
@@ -210,6 +269,7 @@ export default function ItemForm() {
         original: originalVariants,
         user: { uid: user.uid, name: displayName },
       })
+      if (photo.changed) saveItemImage(newId, photo.data, { uid: user.uid })
       navigate(`/items/${newId}`, { replace: true })
     } catch (e) {
       setBusy(false)
@@ -267,6 +327,7 @@ export default function ItemForm() {
 
           {/* 2. Name & price */}
           <Section title={t('itemDetails')} hint={t('itemDetailsHint')}>
+            <PhotoPicker current={currentPhoto} photo={photo} setPhoto={setPhoto} />
             <Field label={t('nameEn')}>
               <input className="field latin" dir="ltr" value={form.en} onChange={(e) => set('en')(e.target.value)} placeholder="Ball Pen 0.7mm" />
             </Field>

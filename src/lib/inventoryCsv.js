@@ -296,9 +296,9 @@ export function inventoryFileName(ts = Date.now()) {
 /* ================= reset ================= */
 
 export const RESET_SCOPES = {
-  inventory: ['categories', 'items', 'variants', 'barcodes', 'itemCosts', 'stockMoves', 'counters'],
+  inventory: ['categories', 'items', 'variants', 'barcodes', 'itemCosts', 'itemImages', 'stockMoves', 'counters'],
   all: [
-    'categories', 'items', 'variants', 'barcodes', 'itemCosts', 'stockMoves', 'counters',
+    'categories', 'items', 'variants', 'barcodes', 'itemCosts', 'itemImages', 'stockMoves', 'counters',
     'suppliers', 'supplierLedger', 'purchases', 'customers', 'customerLedger', 'sales', 'returns',
     'dailyStats', 'expenses', 'cashOuts', 'investments', 'closings',
   ],

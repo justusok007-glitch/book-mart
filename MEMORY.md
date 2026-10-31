@@ -45,6 +45,12 @@ client, and how to work on it safely. Keep it up to date at the end of every cha
 - **Trainee role** (practice only): admin gives it features like any role, but everything a trainee does goes to a
   practice copy of the shop on their own phone — **zero effect on the real database**. Reset button (banner on every
   screen + Settings) throws the copy away and copies the real shop again. See §8b.
+- **Item photos:** one small photo per item (Option B: photo on top of the Sell card, h-20). Stored free in Firestore
+  as a small data-URL (not Firebase Storage — needs paid plan). Each phone keeps photos in IndexedDB and downloads
+  a photo only when items.imageV changes (keeps reads/egress tiny; ~5,000 photos comfortable on the free plan).
+  Shown in Sell cards (all cards in a sub-category get a photo area if any has a photo), item sheet, cart, search,
+  Items list, item page. Added in Add/Edit item (camera or gallery). Backup has "Include item photos" toggle;
+  photos are not in the CSV; inventory reset deletes them; trainees see real photos (read only).
 - Home menu: **rectangular tiles** (2 columns) grouped by section — client prefers tiles over list rows.
 - Design (Oct 2026 redesign, client approved): Rubik font, **charcoal app bar** on every screen, Home has a
   charcoal "counter" with today's figures and the lime Sell button overlapping it.
@@ -101,6 +107,7 @@ src/
   lib/escpos.js         58mm ESC/POS receipt bytes, RawBT intent (rawbt:base64,… in APK / intent: in Chrome)
   lib/saleMath.js       saleTotals, dayKey, formatReceipt, nextLetter, makeReceiptNo (old style), returnValue
   lib/native.js         Capacitor Back button
+  lib/images.js         item photos: makeThumb (200×200 WebP ≤45 KB), saveItemImage, useItemImage, phone cache (IndexedDB 'bm-images')
   lib/beep.js           scan sounds (Web Audio): beepOk (high beep + vibrate), beepError (two low beeps)
   pages/                one file per screen (Home, Login, SellPreview=Sell, Items, ItemDetail, ItemForm, Categories,
                         LowStock, Buy, Suppliers, SupplierDetail, Purchases, Sales, Returns, Customers, Expenses,
@@ -122,6 +129,7 @@ src/
 | variants/{id} | itemId, en, ur, dot, barcode, order, active, stock |
 | barcodes/{code} | variantId, itemId (keeps barcodes unique) |
 | itemCosts/{itemId} | avgCost, lastCost |
+| itemImages/{itemId} | data (data-URL, ~200×200 WebP), v, by, at — items/{id}.imageV = v |
 | stockMoves/{id} | type opening/purchase/adjust/sale/return, qty, unitCost, by… |
 | counters/barcode | next |
 | receiptCounters/{uid} | last, letter (per-user receipt series) |
@@ -215,6 +223,7 @@ Always tell the client to publish after changing this file.
   (code + Enter in the search box). Sell/Buy beep only when the item is really added; not found / no stock →
   low double beep. Viewfinder/BarcodeScanner take `beep={false}` when the screen beeps itself.
 - Trainee role / training mode with Reset (§8b).
+- Item photos (one per item) with phone-side cache; backup photo toggle.
 
 ## 12. Open items / ideas
 

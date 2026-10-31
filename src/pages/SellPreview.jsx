@@ -437,11 +437,11 @@ export default function SellPreview({ demo = false }) {
                       </span>
                     )}
                     {withPhotos && (
-                      <span className="mb-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-white">
-                        {/* whole square photo, never cropped */}
+                      <span className="mb-2 block aspect-square w-full overflow-hidden rounded-xl bg-paper">
+                        {/* square photo across the full card width, like a shop catalogue */}
                         <ItemPhoto
                           item={item}
-                          className="aspect-square h-full rounded-lg object-contain"
+                          className="h-full w-full"
                           fallback={
                             <span className="flex h-full w-full items-center justify-center">
                               <DotStack variants={item.variants} />
@@ -452,8 +452,10 @@ export default function SellPreview({ demo = false }) {
                     )}
                     <span className={`font-semibold leading-snug text-ink ${withPhotos ? 'px-1.5' : 'pe-8'}`}>{pick(item)}</span>
                     <span className={`block ${withPhotos ? 'px-1.5 pb-0.5' : ''}`}>
-                      <span className="block">
-                        <Rs value={item.price} className="text-xl font-bold text-charcoal" />
+                      {/* with photos: price on the left, stock on the right (catalogue style) */}
+                      <span className={withPhotos ? 'flex items-center justify-between gap-2' : 'block'}>
+                        <Rs value={item.price} className={`font-bold text-charcoal ${withPhotos ? 'text-lg' : 'text-xl'}`} />
+                        {withPhotos && live && <LeftTag left={left} low={low} />}
                       </span>
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
                         {item.variants.length > 1 ? (
@@ -463,7 +465,7 @@ export default function SellPreview({ demo = false }) {
                         ) : (
                           !live && <span>{t('tapToAdd')}</span>
                         )}
-                        {live && <LeftTag left={left} low={low} />}
+                        {live && !withPhotos && <LeftTag left={left} low={low} />}
                       </span>
                     </span>
                   </button>

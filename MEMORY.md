@@ -45,7 +45,7 @@ client, and how to work on it safely. Keep it up to date at the end of every cha
 - **Trainee role** (practice only): admin gives it features like any role, but everything a trainee does goes to a
   practice copy of the shop on their own phone — **zero effect on the real database**. Reset button (banner on every
   screen + Settings) throws the copy away and copies the real shop again. See §8b.
-- **Item photos:** one small photo per item (Option B: photo on top of the Sell card, h-20). Stored free in Firestore
+- **Item photos:** one small photo per item (Option B: full-width square photo on top of the Sell card, price left + stock right — catalogue style the client chose). Stored free in Firestore
   as a small data-URL (not Firebase Storage — needs paid plan). Each phone keeps photos in IndexedDB and downloads
   a photo only when items.imageV changes (keeps reads/egress tiny; ~5,000 photos comfortable on the free plan).
   Shown in Sell cards (all cards in a sub-category get a photo area if any has a photo), item sheet, cart, search,

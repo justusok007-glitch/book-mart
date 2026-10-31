@@ -415,7 +415,8 @@ export default function SellPreview({ demo = false }) {
             </div>
 
             {/* 4. Main items */}
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {/* with photos: 3 smaller cards per row; without: 2 per row */}
+            <div className={`mt-4 grid ${sub.items.some((x) => x.imageV) ? 'grid-cols-3 gap-2 sm:grid-cols-4' : 'grid-cols-2 gap-3 sm:grid-cols-3'}`}>
               {sub.items.map((item, _i, all) => {
                 // when any item here has a photo, every card gets a photo area so the grid stays even
                 const withPhotos = all.some((x) => x.imageV)
@@ -427,17 +428,17 @@ export default function SellPreview({ demo = false }) {
                     key={item.id}
                     onClick={() => tapItem(item)}
                     aria-disabled={live && left <= 0}
-                    className={`relative flex min-h-[124px] cursor-pointer flex-col justify-between rounded-2xl border-[1.5px] bg-white text-start transition-colors duration-150 hover:border-charcoal-500 active:bg-paper ${
-                      withPhotos ? 'p-2.5' : 'p-4'
+                    className={`relative flex cursor-pointer flex-col justify-between border-[1.5px] bg-white text-start transition-colors duration-150 hover:border-charcoal-500 active:bg-paper ${
+                      withPhotos ? 'rounded-xl p-1.5' : 'min-h-[124px] rounded-2xl p-4'
                     } ${inCart ? 'border-lime' : 'border-line'} ${live && left <= 0 ? 'opacity-60' : ''}`}
                   >
                     {inCart > 0 && (
-                      <span key={bump} className="pop latin absolute end-2 top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-lime px-2 text-sm font-bold text-charcoal shadow-sm">
+                      <span key={bump} className="pop latin absolute end-1.5 top-1.5 z-10 flex h-7 min-w-7 items-center justify-center rounded-full bg-lime px-2 text-sm font-bold text-charcoal shadow-sm">
                         {inCart}
                       </span>
                     )}
                     {withPhotos && (
-                      <span className="mb-2 block aspect-square w-full overflow-hidden rounded-xl bg-paper">
+                      <span className="mb-1.5 block aspect-square w-full overflow-hidden rounded-lg bg-paper">
                         {/* square photo across the full card width, like a shop catalogue */}
                         <ItemPhoto
                           item={item}
@@ -450,14 +451,14 @@ export default function SellPreview({ demo = false }) {
                         />
                       </span>
                     )}
-                    <span className={`font-semibold leading-snug text-ink ${withPhotos ? 'px-1.5' : 'pe-8'}`}>{pick(item)}</span>
-                    <span className={`block ${withPhotos ? 'px-1.5 pb-0.5' : ''}`}>
+                    <span className={`font-semibold text-ink ${withPhotos ? 'line-clamp-2 px-1 text-sm leading-tight' : 'pe-8 leading-snug'}`}>{pick(item)}</span>
+                    <span className={`block ${withPhotos ? 'mt-0.5 px-1 pb-0.5' : ''}`}>
                       {/* with photos: price on the left, stock on the right (catalogue style) */}
-                      <span className={withPhotos ? 'flex items-center justify-between gap-2' : 'block'}>
-                        <Rs value={item.price} className={`font-bold text-charcoal ${withPhotos ? 'text-lg' : 'text-xl'}`} />
+                      <span className={withPhotos ? 'flex flex-wrap items-center justify-between gap-x-1 gap-y-0.5' : 'block'}>
+                        <Rs value={item.price} className={`font-bold text-charcoal ${withPhotos ? 'text-[15px]' : 'text-xl'}`} />
                         {withPhotos && live && <LeftTag left={left} low={low} />}
                       </span>
-                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+                      <span className={`mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted ${withPhotos ? 'text-xs' : 'text-sm'}`}>
                         {item.variants.length > 1 ? (
                           <span>
                             <span className="latin">{item.variants.length}</span> {t('options')}

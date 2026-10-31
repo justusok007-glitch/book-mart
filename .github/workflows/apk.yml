@@ -29,6 +29,8 @@ jobs:
 
       - run: npm install --no-audit --no-fund
       - run: npm run build
+        env:
+          APP_BUILD: ${{ github.run_number }}
 
       - name: Create the Android project
         run: npx cap add android

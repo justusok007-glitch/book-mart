@@ -231,7 +231,11 @@ export default function Settings() {
         <div className="flex flex-col items-center gap-2 pt-4 text-sm text-muted">
           <img src="./logo-mark.png" alt="" className="h-10 w-10 object-contain opacity-80" />
           <span>
-            {t('appName')} · {t('version')} <span className="latin">0.2.0</span>
+            {t('appName')} · {t('version')}{' '}
+            <span className="latin">
+              {__APP_VERSION__}
+              {__APP_BUILD__ ? ` (build ${__APP_BUILD__})` : ' (web)'}
+            </span>
           </span>
         </div>
       </div>

@@ -5,6 +5,15 @@ client, and how to work on it safely. Keep it up to date at the end of every cha
 
 ---
 
+## 0. Starting a new session
+
+1. Attach/clone the repo `justusok007-glitch/book-mart` (in Claude: add_repo owner `justusok007-glitch`, repo `book-mart`,
+   access `push`), then read this file.
+2. Work on `main`; every push updates the web preview. Build the APK **only** when the client says "build APK" (§9).
+3. Check code with esbuild/eslint (no local npm install); test screens with the harness (§10).
+4. At the end: update this file (§11–§12), commit as `Saqib Khalil <justusok007@gmail.com>`, push, and tell the client
+   in plain words what changed, whether rules must be published, and that the APK is not rebuilt until asked.
+
 ## 1. The project
 
 - **What:** point-of-sale + stock + money app for **Book Mart**, a stationery & books shop in **Okara, Pakistan**.
@@ -54,6 +63,16 @@ client, and how to work on it safely. Keep it up to date at the end of every cha
 - Home menu: **rectangular tiles** (2 columns) grouped by section — client prefers tiles over list rows.
 - Design (Oct 2026 redesign, client approved): Rubik font, **charcoal app bar** on every screen, Home has a
   charcoal "counter" with today's figures and the lime Sell button overlapping it.
+- **Scan beep** on every barcode scan (success = short high beep; not found / no stock = two low beeps).
+- **Printing:** per phone, Settings → Receipt printer → "Print directly with RawBT" (localStorage `bm-print`) sends an
+  ESC/POS 58mm receipt to the RawBT app (it flashes on screen); off = phone print screen. Urdu prints as "?" on
+  thermal printers, so receipts use English names. Fully silent Bluetooth printing (native plugin) is planned once
+  the client has the printer — ask for brand/model.
+- **Daily closing:** opening cash = last closing's counted cash (editable); note counter 5000…10 + coins; "take cash
+  home → record Cash Out first".
+- **Bulk CSV upload:** only Item Name, Category, Sub Category, Sale Price required; empty optional cell on an existing
+  item = keep current value; new categories made automatically (English names only); items with colours keep their
+  per-colour stock (file stock ignored).
 
 ## 4. Tech stack
 
@@ -84,7 +103,9 @@ src/
   App.jsx               routes (RequirePerm / RequireAny), Shell
   main.jsx              entry (+ setupNative for APK)
   index.css             tokens + global styles
-  context/AuthContext   auth, profile, role, can(perm); bootstrapAdmin (seeds roles, assigns receipt letters)
+  context/AuthContext   auth, profile, role, can(perm), training flag; bootstrapAdmin (seeds roles incl. Trainee,
+                        assigns receipt letters); always uses realDb
+  context/TrainingContext  switches a trainee onto the practice copy before screens load; useTraining()
   context/LangContext   t(key), pick({en,ur}), lang switch (localStorage bm-lang)
   components/ui.jsx     Button(data-variant), IconButton(.icon-btn), Field, Toggle, Card, Notice(error|ok|info|warn),
                         Badge, SectionTitle, Sheet, PageHeader(charcoal app bar), Page, Spinner, EmptyState, Rs,
@@ -92,7 +113,9 @@ src/
   components/           Icon (inline SVG set), ProductSearch, BarcodeScanner, ItemBits, Receipt (view/print/share),
                         MoneyBits (DayPicker, MonthPicker, PersonPicker, EntryGroups+Undo), ReportBits (PeriodPicker,
                         BarChart, Row)
-  lib/firebase.js       config, ADMIN_EMAIL, STAFF_DOMAIN (username@bookmart.app), secondary auth for creating users
+  lib/firebase.js       config, ADMIN_EMAIL, STAFF_DOMAIN (username@bookmart.app), secondary auth for creating users,
+                        realDb / switchable db / isTraining / setActiveDb / runTx
+  lib/training.js       practice copy for trainees (open, seed, reset) — see §8b
   lib/permissions.js    PERMISSION_GROUPS, ADMIN_ONLY, DEFAULT_ROLES, FEATURE_GROUPS, FEATURES (Home tiles)
   lib/i18n.js           STRINGS { key: {en, ur} } — add every new UI string here (check for duplicate keys)
   lib/catalog.jsx       CatalogProvider/buildCatalog, saveItem (transaction), categories, barcodes (EAN-13 200…)
@@ -113,7 +136,10 @@ src/
                         LowStock, Buy, Suppliers, SupplierDetail, Purchases, Sales, Returns, Customers, Expenses,
                         CashOut(+Summary), Investment, Closing, ProfitLoss, Reports, Users, Roles, Settings,
                         Backup, BulkInventory, ComingSoon)
-  dev/harness.jsx       DESIGN-CHECK HARNESS (fake admin + sample catalog, never deployed); #/__login shows Login
+  dev/harness.jsx       DESIGN-CHECK HARNESS (fake admin + sample catalog, never deployed); #/__login shows Login;
+                        ?trainee=1 = fake trainee; ?photos=1 = items i1,i2,i4 have photos; window.__fb, __seedReal,
+                        __images for tests
+resources/android/res   app icons copied into the APK; capacitor.config.json (pk.bookmart.app)
 ```
 
 ## 7. Firestore data model
@@ -121,9 +147,9 @@ src/
 | Collection | Contents |
 |---|---|
 | users/{uid} | name, username, email, phone, roleId, active, receiptLetter |
-| roles/{id} | name, nameUr, order, system, permissions{perm:true} |
+| roles/{id} | name, nameUr, order, system, training (practice-only role), permissions{perm:true} |
 | settings/shop | name, phone, address, footer |
-| meta/setup, meta/backup | roles seeded flag; last backup info |
+| meta/setup, meta/backup | rolesSeeded, traineeSeeded flags; last backup info |
 | categories/{id} | en, ur, parentId (null = main), order |
 | items/{id} | en, ur, catId, subId, price, unit, lowStock, active |
 | variants/{id} | itemId, en, ur, dot, barcode, order, active, stock |
@@ -191,6 +217,9 @@ Always tell the client to publish after changing this file.
   (client keeps `release.jks` + password privately; never commit it).
 - `.gitignore` uses `/android/` (root only) — `resources/android/` must stay committed.
 - Bump `package.json` version for releases (APK versionName = version + run number).
+- **Last APK built: build 10 (version 1.1.0), 31 Oct 2026** — includes everything in §11. Update this line after each build.
+- If a phone "doesn't show the change": check Settings bottom line for the build number; usually an old downloaded
+  APK was opened — delete old `book-mart*.apk` from Downloads and install the newest.
 - Settings shows `Version x.y.z (build N)` in the APK (APP_BUILD env → `__APP_BUILD__`), `(web)` on the preview —
   use it to check which APK a phone really runs.
 
@@ -230,7 +259,9 @@ Always tell the client to publish after changing this file.
 ## 12. Open items / ideas
 
 - **Direct Bluetooth printing** without RawBT (native plugin in the APK) — waiting for the client's printer model.
-- Test the APK on a real phone (login, sale, scan, return, print) — client to report.
+- Test the APK on a real phone (login, sale, scan, return, print, photos, trainee) — client to report.
+- Saving a photo and trainee copy against the real Firebase not yet confirmed by the client.
+- Client must keep `firestore.rules` published (latest needed for photos, trainee, receipt counters).
 - Same user selling on two phones offline at once could duplicate a receipt number (accepted; one login per salesman).
 
 ## 13. Updating this file

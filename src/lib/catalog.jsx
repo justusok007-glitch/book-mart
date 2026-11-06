@@ -224,8 +224,11 @@ const cleanVariant = (v, i) => ({
  * rows: [{ id?, en, ur, dot, barcode, opening, active }]  — id present = existing variant
  * original: { variants } current variants for an edit (to free old barcodes)
  */
-export async function saveItem({ itemId, item, rows, cost, original = [], user }) {
+export async function saveItem({ itemId, item, rows, cost, original = [], user, stockByAdmin = false }) {
   const isNew = !itemId
+  // Admin only: opening stock on new types, and correcting the stock of existing types
+  if (!stockByAdmin) rows = rows.map((r) => ({ ...r, opening: '', stockEdit: undefined }))
+  const stockEdits = rows.filter((r) => r.id && r.stockEdit != null && r.stockEdit !== '')
   const itemRef = isNew ? doc(collection(db, 'items')) : doc(db, 'items', itemId)
   const oldById = Object.fromEntries(original.map((v) => [v.id, v]))
 
@@ -236,6 +239,8 @@ export async function saveItem({ itemId, item, rows, cost, original = [], user }
 
   await runTx(async (tx) => {
     // 1) reads first
+    const stockSnaps = await Promise.all(stockEdits.map((r) => tx.get(doc(db, 'variants', r.id))))
+    const curStock = Object.fromEntries(stockEdits.map((r, i) => [r.id, Number(stockSnaps[i].data()?.stock) || 0]))
     const snaps = await Promise.all(claims.map(({ code }) => tx.get(doc(db, 'barcodes', code))))
     snaps.forEach((s, i) => {
       if (s.exists()) {
@@ -254,7 +259,22 @@ export async function saveItem({ itemId, item, rows, cost, original = [], user }
       const data = cleanVariant(r, i)
       if (r.id) {
         const old = oldById[r.id]
-        tx.update(doc(db, 'variants', r.id), { ...data, updatedAt: stamp })
+        const target = r.id in curStock ? Math.max(0, Math.floor(Number(r.stockEdit) || 0)) : null
+        const diff = target == null ? 0 : target - curStock[r.id]
+        tx.update(doc(db, 'variants', r.id), { ...data, ...(diff ? { stock: target } : {}), updatedAt: stamp })
+        if (diff) {
+          tx.set(doc(collection(db, 'stockMoves')), {
+            type: 'adjust',
+            itemId: itemRef.id,
+            variantId: r.id,
+            qty: diff,
+            reason: 'count',
+            note: 'Stock corrected by Admin',
+            by: user.uid,
+            byName: user.name || '',
+            at: stamp,
+          })
+        }
         if (old?.barcode && old.barcode !== data.barcode) tx.delete(doc(db, 'barcodes', old.barcode))
         if (data.barcode && old?.barcode !== data.barcode)
           tx.set(doc(db, 'barcodes', data.barcode), { variantId: r.id, itemId: itemRef.id })

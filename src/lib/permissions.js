@@ -65,7 +65,7 @@ export const PERMISSION_GROUPS = [
 ]
 
 // These can never be given to a role — Admin only.
-export const ADMIN_ONLY = ['manage_roles', 'backup_restore', 'bulk_inventory']
+export const ADMIN_ONLY = ['manage_roles', 'backup_restore', 'bulk_inventory', 'reset_data']
 
 export const ALL_PERMISSIONS = PERMISSION_GROUPS.flatMap((g) => g.perms.map((p) => p.key))
 
@@ -106,7 +106,7 @@ export const TRAINEE_ROLE = {
 }
 
 // never available in training, even if ticked: these change logins or the shop's setup
-export const TRAINING_BLOCKED = ['manage_users', 'manage_roles', 'backup_restore', 'bulk_inventory', 'shop_settings']
+export const TRAINING_BLOCKED = ['manage_users', 'manage_roles', 'backup_restore', 'bulk_inventory', 'reset_data', 'shop_settings']
 
 // Home screen tiles, grouped. "ready" = built; others show their phase badge until built.
 export const FEATURE_GROUPS = [
@@ -145,5 +145,6 @@ export const FEATURES = [
   { key: 'roles', group: 'admin', perm: 'manage_roles', icon: 'shield', en: 'Roles & Permissions', ur: 'عہدے اور اختیارات', ready: true, path: '/roles' },
   { key: 'bulk-inventory', group: 'admin', perm: 'bulk_inventory', icon: 'package', en: 'Bulk Inventory', ur: 'بلک انوینٹری', ready: true, path: '/bulk-inventory' },
   { key: 'backup', group: 'admin', perm: 'backup_restore', icon: 'lock', en: 'Backup & Restore', ur: 'بیک اپ اور بحالی', ready: true, path: '/backup' },
+  { key: 'reset', group: 'admin', perm: 'reset_data', icon: 'trash', en: 'Reset Data', ur: 'ڈیٹا ری سیٹ', ready: true, path: '/reset' },
   { key: 'settings', group: 'admin', perm: null, icon: 'sliders', en: 'Settings', ur: 'ترتیبات', ready: true, path: '/settings' },
 ]

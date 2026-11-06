@@ -86,9 +86,13 @@ service cloud.firestore {
     }
     match /variants/{id} {
       allow read: if canReadShop();
-      allow create, delete: if can('manage_items');
+      // opening stock is Admin only: other item managers create new types with stock 0
+      allow create: if isAdmin() || (can('manage_items') && request.resource.data.get('stock', 0) == 0);
+      allow delete: if can('manage_items');
+      // item managers edit names/barcodes but not the stock number (Admin may correct it);
       // buying and adjusting may only change the stock number
-      allow update: if can('manage_items')
+      allow update: if isAdmin()
+        || (can('manage_items') && request.resource.data.get('stock', 0) == resource.data.get('stock', 0))
         || ((can('buy') || can('stock_adjust') || can('sell') || can('sale_returns'))
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']));
     }
@@ -108,7 +112,7 @@ service cloud.firestore {
     match /stockMoves/{id} {
       allow read: if can('view_items');
       allow create: if request.resource.data.by == request.auth.uid && (
-           (request.resource.data.type == 'opening'  && can('manage_items'))
+           (request.resource.data.type == 'opening'  && isAdmin())
         || (request.resource.data.type == 'purchase' && can('buy'))
         || (request.resource.data.type == 'adjust'   && can('stock_adjust'))
         || (request.resource.data.type == 'sale'     && can('sell'))

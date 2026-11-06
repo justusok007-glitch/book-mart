@@ -32,6 +32,7 @@ import ProfitLoss from './pages/ProfitLoss'
 import Reports from './pages/Reports'
 import Backup from './pages/Backup'
 import BulkInventory from './pages/BulkInventory'
+import ResetData from './pages/ResetData'
 
 function RequirePerm({ perm, children }) {
   const { can } = useAuth()
@@ -108,6 +109,7 @@ export function Shell() {
       <Route path="/reports" element={<RequirePerm perm="view_reports"><Reports /></RequirePerm>} />
       <Route path="/backup" element={<RequirePerm perm="backup_restore"><Backup /></RequirePerm>} />
       <Route path="/bulk-inventory" element={<RequirePerm perm="bulk_inventory"><BulkInventory /></RequirePerm>} />
+      <Route path="/reset" element={<RequirePerm perm="reset_data"><ResetData /></RequirePerm>} />
       <Route path="/sell" element={<RequirePerm perm="sell"><SellPreview /></RequirePerm>} />
       <Route path="/soon/:key" element={<ComingSoon />} />
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -70,6 +70,18 @@ client, and how to work on it safely. Keep it up to date at the end of every cha
   the client has the printer — ask for brand/model.
 - **Daily closing:** opening cash = last closing's counted cash (editable); note counter 5000…10 + coins; "take cash
   home → record Cash Out first".
+- **Opening stock is Admin only** (Nov 2026): other roles with "Add / edit items" create new types with stock 0
+  (field shown read-only + hint "add stock with Buy"); only Admin can enter opening stock or correct an existing
+  type's stock in the item form (saved as an `adjust` stock move, note "Stock corrected by Admin"). Enforced in
+  rules: variants create with stock>0 / stock change via manage_items = Admin only; `opening` moves = Admin only.
+- **Reset Data** (Admin only, own Home tile `/reset`, perm `reset_data` in ADMIN_ONLY): tick any of Inventory,
+  Sales & purchases, Udhaar khata, Expenses & cash, Roles & permissions. Safety backup downloaded first; users,
+  shop settings and receipt numbering always kept. Sales & purchases = sales, returns, purchases, supplierLedger,
+  supplier balances→0, sale/purchase/return stock moves, sales fields of dailyStats (stock numbers unchanged).
+  Udhaar = customerLedger + customer balances→0 (names kept). Expenses & cash = expenses, cashOuts, investments,
+  closings + money fields of dailyStats. Roles = default 4 roles restored, custom roles deleted. Bulk Inventory
+  links to it. Code: `resetSteps/resetData(parts)` in lib/inventoryCsv.js, pages/ResetData.jsx.
+- **Item photo:** separate **Camera** (`capture="environment"`, opens camera directly) and **Gallery** buttons.
 - **Bulk CSV upload:** only Item Name, Category, Sub Category, Sale Price required; empty optional cell on an existing
   item = keep current value; new categories made automatically (English names only); items with colours keep their
   per-colour stock (file stock ignored).
@@ -135,7 +147,7 @@ src/
   pages/                one file per screen (Home, Login, SellPreview=Sell, Items, ItemDetail, ItemForm, Categories,
                         LowStock, Buy, Suppliers, SupplierDetail, Purchases, Sales, Returns, Customers, Expenses,
                         CashOut(+Summary), Investment, Closing, ProfitLoss, Reports, Users, Roles, Settings,
-                        Backup, BulkInventory, ComingSoon)
+                        Backup, BulkInventory, ResetData, ComingSoon)
   dev/harness.jsx       DESIGN-CHECK HARNESS (fake admin + sample catalog, never deployed); #/__login shows Login;
                         ?trainee=1 = fake trainee; ?photos=1 = items i1,i2,i4 have photos; window.__fb, __seedReal,
                         __images for tests
@@ -255,13 +267,17 @@ Always tell the client to publish after changing this file.
   low double beep. Viewfinder/BarcodeScanner take `beep={false}` when the screen beeps itself.
 - Trainee role / training mode with Reset (§8b).
 - Item photos (one per item) with phone-side cache; backup photo toggle.
+- Nov 2026: opening stock Admin only (+ Admin stock correction in item form, rules locked); separate Reset Data
+  options page (inventory / sales & purchases / udhaar / expenses & cash / roles); Camera + Gallery photo buttons.
 
 ## 12. Open items / ideas
 
 - **Direct Bluetooth printing** without RawBT (native plugin in the APK) — waiting for the client's printer model.
 - Test the APK on a real phone (login, sale, scan, return, print, photos, trainee) — client to report.
 - Saving a photo and trainee copy against the real Firebase not yet confirmed by the client.
-- Client must keep `firestore.rules` published (latest needed for photos, trainee, receipt counters).
+- Client must keep `firestore.rules` published (latest needed for photos, trainee, receipt counters, **Admin-only
+  opening stock — rules changed 6 Nov 2026**).
+- Camera button in the APK not yet tested on a real phone (needs next APK build).
 - Same user selling on two phones offline at once could duplicate a receipt number (accepted; one login per salesman).
 
 ## 13. Updating this file

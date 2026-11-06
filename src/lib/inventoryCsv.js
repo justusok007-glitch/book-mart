@@ -4,8 +4,9 @@
 //   Item Name, Item Name Ur, Category, Sub Category, Sale Price, Cost Price, Opening Stock, Low Stock
 // The downloaded file has the same columns (+ Barcode and Types at the end), so it can be edited and uploaded again.
 
-import { collection, doc, getDocs, serverTimestamp, writeBatch } from 'firebase/firestore'
+import { collection, deleteField, doc, getDocs, query, serverTimestamp, where, writeBatch } from 'firebase/firestore'
 import { db } from './firebase'
+import { DEFAULT_ROLES, TRAINEE_ROLE } from './permissions'
 
 export const CSV_COLUMNS = ['Item Name', 'Item Name Ur', 'Category', 'Sub Category', 'Sale Price', 'Cost Price', 'Opening Stock', 'Low Stock']
 const FIELD = {
@@ -295,23 +296,89 @@ export function inventoryFileName(ts = Date.now()) {
 
 /* ================= reset ================= */
 
-export const RESET_SCOPES = {
-  inventory: ['categories', 'items', 'variants', 'barcodes', 'itemCosts', 'itemImages', 'stockMoves', 'counters'],
-  all: [
-    'categories', 'items', 'variants', 'barcodes', 'itemCosts', 'itemImages', 'stockMoves', 'counters',
-    'suppliers', 'supplierLedger', 'purchases', 'customers', 'customerLedger', 'sales', 'returns',
-    'dailyStats', 'expenses', 'cashOuts', 'investments', 'closings',
-  ],
+// Separate parts that the Admin can reset on their own or together.
+// Users, shop settings and receipt numbering are always kept.
+export const RESET_PARTS = ['inventory', 'sales', 'udhaar', 'money', 'roles']
+
+const INVENTORY_COLLECTIONS = ['categories', 'items', 'variants', 'barcodes', 'itemCosts', 'itemImages', 'stockMoves', 'counters']
+const SALES_COLLECTIONS = ['sales', 'returns', 'purchases', 'supplierLedger']
+const MONEY_COLLECTIONS = ['expenses', 'cashOuts', 'investments', 'closings']
+// running daily totals written by each part (dailyStats/{day})
+const SALES_STATS = [
+  'salesCount', 'salesTotal', 'discountTotal', 'costTotal', 'profit', 'cashIn', 'creditGiven', 'creditReceived', 'bankIn',
+  'itemsSold', 'bySeller', 'returnsCount', 'returnsTotal', 'returnsCost', 'cashRefunds', 'supplierCash',
+]
+const MONEY_STATS = ['expensesTotal', 'expenseCash', 'cashOutTotal', 'cashOutCount', 'investTotal', 'investCash']
+
+async function deleteAll(name) {
+  const snap = await getDocs(collection(db, name))
+  await commitInChunks(snap.docs.map((d) => (b) => b.delete(d.ref)))
 }
 
-// Users, roles and shop settings are always kept.
-export async function resetData(scope, onProgress) {
-  const names = RESET_SCOPES[scope]
+async function zeroBalances(name) {
+  const snap = await getDocs(collection(db, name))
+  const stamp = serverTimestamp()
+  await commitInChunks(snap.docs.filter((d) => (d.data().balance || 0) !== 0).map((d) => (b) => b.update(d.ref, { balance: 0, updatedAt: stamp })))
+}
+
+// Build the list of steps for the chosen parts (exported for tests).
+export function resetSteps(parts) {
+  const has = (p) => parts.includes(p)
+  const steps = []
+  if (has('inventory')) for (const n of INVENTORY_COLLECTIONS) steps.push({ name: n, run: () => deleteAll(n) })
+  if (has('sales')) {
+    for (const n of SALES_COLLECTIONS) steps.push({ name: n, run: () => deleteAll(n) })
+    steps.push({ name: 'suppliers', run: () => zeroBalances('suppliers') })
+    if (!has('inventory')) {
+      // stock history of sales, purchases and returns (stock numbers themselves are not changed)
+      steps.push({
+        name: 'stockMoves',
+        run: async () => {
+          const snap = await getDocs(query(collection(db, 'stockMoves'), where('type', 'in', ['sale', 'purchase', 'return'])))
+          await commitInChunks(snap.docs.map((d) => (b) => b.delete(d.ref)))
+        },
+      })
+    }
+  }
+  if (has('udhaar')) {
+    steps.push({ name: 'customerLedger', run: () => deleteAll('customerLedger') })
+    steps.push({ name: 'customers', run: () => zeroBalances('customers') })
+  }
+  if (has('money')) for (const n of MONEY_COLLECTIONS) steps.push({ name: n, run: () => deleteAll(n) })
+  if (has('sales') || has('money')) {
+    const fields = [...(has('sales') ? SALES_STATS : []), ...(has('money') ? MONEY_STATS : [])]
+    steps.push({
+      name: 'dailyStats',
+      run: async () => {
+        const snap = await getDocs(collection(db, 'dailyStats'))
+        if (has('sales') && has('money')) return commitInChunks(snap.docs.map((d) => (b) => b.delete(d.ref)))
+        const clear = Object.fromEntries(fields.map((f) => [f, deleteField()]))
+        await commitInChunks(snap.docs.map((d) => (b) => b.update(d.ref, clear)))
+      },
+    })
+  }
+  if (has('roles')) {
+    steps.push({
+      name: 'roles',
+      run: async () => {
+        const snap = await getDocs(collection(db, 'roles'))
+        const stamp = serverTimestamp()
+        const defaults = { ...DEFAULT_ROLES, trainee: TRAINEE_ROLE }
+        const ops = snap.docs.filter((d) => !defaults[d.id]).map((d) => (b) => b.delete(d.ref))
+        for (const [id, role] of Object.entries(defaults)) ops.push((b) => b.set(doc(db, 'roles', id), { ...role, createdAt: stamp }))
+        ops.push((b) => b.set(doc(db, 'meta', 'setup'), { rolesSeeded: true, traineeSeeded: true, at: stamp }, { merge: true }))
+        await commitInChunks(ops)
+      },
+    })
+  }
+  return steps
+}
+
+export async function resetData(parts, onProgress) {
+  const steps = resetSteps(parts)
   let i = 0
-  for (const name of names) {
-    const snap = await getDocs(collection(db, name))
-    const ops = snap.docs.map((d) => (b) => b.delete(d.ref))
-    await commitInChunks(ops)
-    onProgress?.(++i / names.length, name)
+  for (const s of steps) {
+    await s.run()
+    onProgress?.(++i / steps.length, s.name)
   }
 }

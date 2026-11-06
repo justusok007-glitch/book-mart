@@ -18,17 +18,33 @@ const newKey = () => `r${++keySeq}`
 // one photo per item: taken with the camera or chosen from the gallery, made small automatically
 function PhotoPicker({ current, photo, setPhoto }) {
   const { t } = useLang()
-  const input = useRef(null)
+  const cameraInput = useRef(null)
+  const galleryInput = useRef(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const shown = photo.changed ? photo.data : current
+
+  async function picked(e) {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    setBusy(true)
+    setError('')
+    try {
+      setPhoto({ changed: true, data: await makeThumb(f) })
+    } catch {
+      setError(t('photoFailed'))
+    }
+    setBusy(false)
+  }
+
   return (
     <div className="flex items-center gap-4">
       <button
         type="button"
-        onClick={() => input.current?.click()}
+        onClick={() => cameraInput.current?.click()}
         className="flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-[1.5px] border-dashed border-charcoal-500/40 bg-paper text-muted hover:border-charcoal-500"
-        aria-label={t('itemPhoto')}
+        aria-label={t('takePhoto')}
       >
         {busy ? <Spinner /> : shown ? <img src={shown} alt="" className="h-full w-full object-cover" /> : <Icon name="camera" size={30} />}
       </button>
@@ -37,8 +53,11 @@ function PhotoPicker({ current, photo, setPhoto }) {
           {t('itemPhoto')} <span className="font-normal text-muted">({t('optional')})</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={() => input.current?.click()} disabled={busy}>
-            <Icon name="camera" size={16} /> {shown ? t('changePhoto') : t('addPhoto')}
+          <Button type="button" size="sm" variant="secondary" onClick={() => cameraInput.current?.click()} disabled={busy}>
+            <Icon name="camera" size={16} /> {t('takePhoto')}
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => galleryInput.current?.click()} disabled={busy}>
+            <Icon name="image" size={16} /> {t('fromGallery')}
           </Button>
           {shown && (
             <Button type="button" size="sm" variant="danger" onClick={() => setPhoto({ changed: true, data: null })} disabled={busy}>
@@ -48,25 +67,9 @@ function PhotoPicker({ current, photo, setPhoto }) {
         </div>
         {error ? <p className="text-sm text-danger">{error}</p> : <p className="text-xs text-muted">{t('photoHint')}</p>}
       </div>
-      <input
-        ref={input}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={async (e) => {
-          const f = e.target.files?.[0]
-          e.target.value = ''
-          if (!f) return
-          setBusy(true)
-          setError('')
-          try {
-            setPhoto({ changed: true, data: await makeThumb(f) })
-          } catch {
-            setError(t('photoFailed'))
-          }
-          setBusy(false)
-        }}
-      />
+      {/* capture = open the back camera directly (phone and APK); without it = gallery / files */}
+      <input ref={cameraInput} type="file" accept="image/*" capture="environment" className="hidden" onChange={picked} />
+      <input ref={galleryInput} type="file" accept="image/*" className="hidden" onChange={picked} />
     </div>
   )
 }
@@ -131,7 +134,7 @@ export default function ItemForm() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { t, pick } = useLang()
-  const { user, displayName, can } = useAuth()
+  const { user, displayName, can, isAdmin } = useAuth()
   const { ready, categories, subsOf, itemById, variantsOf, costs } = useCatalog()
   const editing = !!id
   const existing = editing ? itemById[id] : null
@@ -264,7 +267,9 @@ export default function ItemForm() {
       const newId = await saveItem({
         itemId: editing ? id : null,
         item: form,
-        rows,
+        // opening stock and stock corrections are Admin only
+        rows: isAdmin ? rows : rows.map((r) => ({ ...r, opening: '', stockEdit: undefined })),
+        stockByAdmin: isAdmin,
         cost: !editing && showCost ? cost : null,
         original: originalVariants,
         user: { uid: user.uid, name: displayName },
@@ -479,10 +484,23 @@ export default function ItemForm() {
                         onChange={(v) => updateRow(r.key, { barcode: v })}
                         onScan={() => setScanFor(r.key)}
                       />
-                      {r.id ? (
+                      {r.id && isAdmin ? (
                         <div className="sm:w-36">
-                          <span className="mb-1.5 block text-sm font-semibold">{t('inStock')}</span>
-                          <div className="latin flex min-h-12 items-center rounded-xl bg-paper px-4 text-lg font-bold">{r.stock}</div>
+                          <Field label={t('inStock')} hint={r.stockEdit != null && r.stockEdit !== '' && Number(r.stockEdit) !== r.stock ? `${t('wasStock')} ${r.stock}` : undefined}>
+                            <input
+                              className="field latin text-lg font-bold"
+                              dir="ltr"
+                              inputMode="numeric"
+                              aria-label={t('inStock')}
+                              value={r.stockEdit ?? String(r.stock)}
+                              onChange={(e) => updateRow(r.key, { stockEdit: intInput(e.target.value) })}
+                            />
+                          </Field>
+                        </div>
+                      ) : r.id || !isAdmin ? (
+                        <div className="sm:w-36">
+                          <span className="mb-1.5 block text-sm font-semibold">{r.id ? t('inStock') : t('openingStock')}</span>
+                          <div className="latin flex min-h-12 items-center rounded-xl bg-paper px-4 text-lg font-bold">{r.id ? r.stock : 0}</div>
                         </div>
                       ) : (
                         <div className="sm:w-36">
@@ -510,6 +528,8 @@ export default function ItemForm() {
                 )
               })}
             </div>
+            {!isAdmin && <p className="text-sm text-muted">{t('openingAdminOnly')}</p>}
+            {isAdmin && editing && <p className="text-sm text-muted">{t('stockEditAdminHint')}</p>}
           </Section>
 
           {/* 4. Show / hide whole item */}

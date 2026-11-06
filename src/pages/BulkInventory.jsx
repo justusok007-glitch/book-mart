@@ -1,13 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
 import { useCatalog } from '../lib/catalog'
 import {
-  applyUpload, downloadText, inventoryCsv, inventoryFileName, parseCsv, planUpload, readRows, resetData, templateCsv,
+  applyUpload, downloadText, inventoryCsv, inventoryFileName, parseCsv, planUpload, readRows, templateCsv,
 } from '../lib/inventoryCsv'
-import { makeBackup, saveBackupFile } from '../lib/backup'
 import { errorText } from '../lib/errors'
-import { Badge, Button, Card, Field, Notice, Page, Rs, SectionTitle, Segmented, Spinner, Toggle, useOnline } from '../components/ui'
+import { Badge, Button, Card, Notice, Page, Rs, SectionTitle, Spinner, Toggle, useOnline } from '../components/ui'
 import Icon from '../components/Icon'
 
 const STATUS = {
@@ -192,65 +192,10 @@ function Upload() {
   )
 }
 
-/* ---------------- reset ---------------- */
-function Reset() {
-  const { t } = useLang()
-  const { displayName } = useAuth()
-  const online = useOnline()
-  const [scope, setScope] = useState('inventory')
-  const [confirm, setConfirm] = useState('')
-  const [busy, setBusy] = useState(null)
-  const [error, setError] = useState('')
-  const [done, setDone] = useState('')
-
-  async function run() {
-    setError('')
-    setDone('')
-    try {
-      setBusy({ value: 0, label: t('savingSafetyCopy') })
-      const safety = await makeBackup({ by: displayName })
-      await saveBackupFile(safety)
-      setBusy({ value: 0, label: t('resetting') })
-      await resetData(scope, (v, name) => setBusy({ value: v, label: `${t('resetting')} · ${name}` }))
-      setConfirm('')
-      setDone(t('resetDone'))
-    } catch (e) {
-      setError(`${t('resetFailed')} ${errorText(e, t)}`)
-    }
-    setBusy(null)
-  }
-
-  return (
-    <Card className="space-y-4 p-4">
-      <Segmented
-        value={scope}
-        onChange={setScope}
-        options={[
-          { value: 'inventory', label: t('resetInventory') },
-          { value: 'all', label: t('resetEverything') },
-        ]}
-      />
-      <p className="text-sm text-muted">{scope === 'inventory' ? t('resetInventoryHint') : t('resetEverythingHint')}</p>
-      <Notice type="error">{t('resetWarning')}</Notice>
-      <Field label={t('typeReset')}>
-        <input className="field latin text-lg font-bold tracking-widest" dir="ltr" value={confirm} onChange={(e) => setConfirm(e.target.value.toUpperCase())} placeholder="RESET" autoCapitalize="characters" autoComplete="off" />
-      </Field>
-      {busy ? (
-        <Progress value={busy.value} label={busy.label} />
-      ) : (
-        <Button variant="danger" size="lg" className="w-full" onClick={run} disabled={confirm !== 'RESET' || !online}>
-          <Icon name="trash" size={20} /> {t('resetNow')}
-        </Button>
-      )}
-      <Notice>{error}</Notice>
-      {done && <Notice type="ok">{done}</Notice>}
-    </Card>
-  )
-}
-
 export default function BulkInventory() {
   const { t } = useLang()
   const catalog = useCatalog()
+  const navigate = useNavigate()
   return (
     <Page title={t('bulkInventory')}>
       <div className="space-y-6">
@@ -271,7 +216,12 @@ export default function BulkInventory() {
 
         <section>
           <SectionTitle>{t('resetData')}</SectionTitle>
-          <Reset />
+          <Card className="space-y-3 p-4">
+            <p className="text-sm text-muted">{t('resetMovedHint')}</p>
+            <Button variant="secondary" size="lg" className="w-full" onClick={() => navigate('/reset')}>
+              <Icon name="trash" size={20} /> {t('resetData')}
+            </Button>
+          </Card>
         </section>
       </div>
     </Page>

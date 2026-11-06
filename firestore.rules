@@ -82,13 +82,15 @@ service cloud.firestore {
     }
     match /items/{id} {
       allow read: if canReadShop();
-      allow write: if can('manage_items');
+      allow create, update: if can('manage_items');
+      // deleting an item is Admin only
+      allow delete: if isAdmin();
     }
     match /variants/{id} {
       allow read: if canReadShop();
       // opening stock is Admin only: other item managers create new types with stock 0
       allow create: if isAdmin() || (can('manage_items') && request.resource.data.get('stock', 0) == 0);
-      allow delete: if can('manage_items');
+      allow delete: if isAdmin();
       // item managers edit names/barcodes but not the stock number (Admin may correct it);
       // buying and adjusting may only change the stock number
       allow update: if isAdmin()

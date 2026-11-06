@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
-import { fetchMoves, useCatalog } from '../lib/catalog'
+import { deleteItem, fetchMoves, useCatalog } from '../lib/catalog'
+import { errorText } from '../lib/errors'
 import { UNITS } from '../lib/colors'
 import { Badge, Button, Card, EmptyState, Field, Notice, Page, Rs, SectionTitle, Segmented, Sheet, Spinner } from '../components/ui'
 import { ADJUST_REASONS, adjustStock } from '../lib/purchasing'
@@ -27,11 +28,12 @@ export default function ItemDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { t, pick } = useLang()
-  const { can } = useAuth()
+  const { can, isAdmin } = useAuth()
   const { ready, itemById, catById, variantsOf, itemStock, isLow, costs } = useCatalog()
   const item = itemById[id]
   const [moves, setMoves] = useState(null)
   const [adjusting, setAdjusting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // reload history whenever stock changes
   const stockKey = item ? itemStock(id) : 0
@@ -208,6 +210,16 @@ export default function ItemDetail() {
           )}
         </section>
       </div>
+      {isAdmin && (
+        <section className="mt-8">
+          <Button variant="danger" className="w-full" onClick={() => setDeleting(true)}>
+            <Icon name="trash" size={18} /> {t('deleteItem')}
+          </Button>
+        </section>
+      )}
+      <Sheet open={deleting} title={t('deleteItem')} onClose={() => setDeleting(false)}>
+        {deleting && <DeleteItem item={item} stock={itemStock(id)} unit={unit} onCancel={() => setDeleting(false)} onDone={() => navigate('/items', { replace: true })} />}
+      </Sheet>
       <Sheet open={adjusting} title={t('adjustStock')} onClose={() => setAdjusting(false)}>
         {adjusting && <AdjustForm item={item} variants={all.filter((v) => v.active !== false)} multi={multi} onDone={() => setAdjusting(false)} />}
       </Sheet>
@@ -295,5 +307,43 @@ function AdjustForm({ item, variants, multi, onDone }) {
         <Icon name="check" size={20} /> {t('saveAdjustment')}
       </Button>
     </form>
+  )
+}
+
+// Admin only: confirm and delete one item
+function DeleteItem({ item, stock, unit, onCancel, onDone }) {
+  const { t, pick } = useLang()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  async function go() {
+    setBusy(true)
+    setError('')
+    try {
+      await deleteItem(item.id)
+      onDone()
+    } catch (e) {
+      setError(errorText(e, t))
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="space-y-4">
+      <p className="text-lg font-semibold">{t('deleteItemAsk')} <span className="text-ink">“{pick(item)}”</span>?</p>
+      {stock > 0 && (
+        <Notice type="warn">
+          {t('deleteItemStock')} <span className="latin font-bold">{stock}</span> {unit}
+        </Notice>
+      )}
+      <p className="text-sm text-muted">{t('deleteItemHint')}</p>
+      <Notice>{error}</Notice>
+      <div className="grid grid-cols-2 gap-3">
+        <Button variant="secondary" size="lg" onClick={onCancel} disabled={busy}>
+          {t('cancel')}
+        </Button>
+        <Button variant="danger" size="lg" onClick={go} disabled={busy}>
+          {busy ? <Spinner /> : <Icon name="trash" size={18} />} {t('delete')}
+        </Button>
+      </div>
+    </div>
   )
 }

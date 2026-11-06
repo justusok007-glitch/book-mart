@@ -224,6 +224,23 @@ const cleanVariant = (v, i) => ({
  * rows: [{ id?, en, ur, dot, barcode, opening, active }]  — id present = existing variant
  * original: { variants } current variants for an edit (to free old barcodes)
  */
+// Admin only: delete one item completely — the item, all its colours/types (with their stock),
+// barcodes, cost price and photo. Past sales, purchases and stock history are kept (they store
+// the item name), so reports stay correct.
+export async function deleteItem(itemId) {
+  const vs = await getDocs(query(collection(db, 'variants'), where('itemId', '==', itemId)))
+  const b = writeBatch(db)
+  for (const v of vs.docs) {
+    const code = v.data().barcode
+    if (code) b.delete(doc(db, 'barcodes', code))
+    b.delete(v.ref)
+  }
+  b.delete(doc(db, 'itemCosts', itemId))
+  b.delete(doc(db, 'itemImages', itemId))
+  b.delete(doc(db, 'items', itemId))
+  await b.commit()
+}
+
 export async function saveItem({ itemId, item, rows, cost, original = [], user, stockByAdmin = false }) {
   const isNew = !itemId
   // Admin only: opening stock on new types, and correcting the stock of existing types

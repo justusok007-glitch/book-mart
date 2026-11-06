@@ -233,7 +233,7 @@ Always tell the client to publish after changing this file.
   (client keeps `release.jks` + password privately; never commit it).
 - `.gitignore` uses `/android/` (root only) — `resources/android/` must stay committed.
 - Bump `package.json` version for releases (APK versionName = version + run number).
-- **Last APK built: build 10 (version 1.1.0), 31 Oct 2026** — includes everything in §11. Update this line after each build.
+- **Last APK built: build 11 (version 1.2.0), 6 Nov 2026** — includes everything in §11. Update this line after each build.
 - If a phone "doesn't show the change": check Settings bottom line for the build number; usually an old downloaded
   APK was opened — delete old `book-mart*.apk` from Downloads and install the newest.
 - Settings shows `Version x.y.z (build N)` in the APK (APP_BUILD env → `__APP_BUILD__`), `(web)` on the preview —
@@ -282,7 +282,7 @@ Always tell the client to publish after changing this file.
 - Saving a photo and trainee copy against the real Firebase not yet confirmed by the client.
 - Client must keep `firestore.rules` published (latest needed for photos, trainee, receipt counters, **Admin-only
   opening stock — rules changed 6 Nov 2026**).
-- Camera button in the APK not yet tested on a real phone (needs next APK build).
+- Camera button, Admin-only opening stock, Reset Data options and Delete item are in APK build 11 — not yet tested on a real phone.
 - Same user selling on two phones offline at once could duplicate a receipt number (accepted; one login per salesman).
 
 ## 13. Updating this file

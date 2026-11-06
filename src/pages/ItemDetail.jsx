@@ -218,7 +218,7 @@ export default function ItemDetail() {
         </section>
       )}
       <Sheet open={deleting} title={t('deleteItem')} onClose={() => setDeleting(false)}>
-        {deleting && <DeleteItem item={item} stock={itemStock(id)} unit={unit} onCancel={() => setDeleting(false)} onDone={() => navigate('/items', { replace: true })} />}
+        {deleting && <DeleteItem item={item} variants={all} stock={itemStock(id)} unit={unit} onCancel={() => setDeleting(false)} onDone={() => navigate('/items', { replace: true })} />}
       </Sheet>
       <Sheet open={adjusting} title={t('adjustStock')} onClose={() => setAdjusting(false)}>
         {adjusting && <AdjustForm item={item} variants={all.filter((v) => v.active !== false)} multi={multi} onDone={() => setAdjusting(false)} />}
@@ -311,15 +311,16 @@ function AdjustForm({ item, variants, multi, onDone }) {
 }
 
 // Admin only: confirm and delete one item
-function DeleteItem({ item, stock, unit, onCancel, onDone }) {
+function DeleteItem({ item, variants, stock, unit, onCancel, onDone }) {
   const { t, pick } = useLang()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  async function go() {
+  function go() {
     setBusy(true)
     setError('')
     try {
-      await deleteItem(item.id)
+      // like Buy: don't wait for the server, so it also works without internet
+      deleteItem(item.id, variants).catch((e) => window.alert(`${t('deleteItem')}: ${errorText(e, t)}`))
       onDone()
     } catch (e) {
       setError(errorText(e, t))

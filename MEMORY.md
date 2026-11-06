@@ -82,7 +82,7 @@ client, and how to work on it safely. Keep it up to date at the end of every cha
   closings + money fields of dailyStats. Roles = default 4 roles restored, custom roles deleted. Bulk Inventory
   links to it. Code: `resetSteps/resetData(parts)` in lib/inventoryCsv.js, pages/ResetData.jsx.
 - **Delete item** (Admin only): red button at the bottom of Item detail → confirm sheet (warns if stock left).
-  `deleteItem(itemId)` in lib/catalog.jsx deletes the item, its variants, their barcodes, itemCosts and
+  `deleteItem(itemId, variants)` in lib/catalog.jsx (not awaited — offline-safe, like Buy) deletes the item, its variants, their barcodes, itemCosts and
   itemImages in one batch; sales/purchases/stockMoves are kept (sale lines store item names). Rules: items
   delete and variants delete = isAdmin() only (6 Nov 2026).
 - **Item photo:** separate **Camera** (`capture="environment"`, opens camera directly) and **Gallery** buttons.

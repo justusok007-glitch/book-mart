@@ -227,18 +227,17 @@ const cleanVariant = (v, i) => ({
 // Admin only: delete one item completely — the item, all its colours/types (with their stock),
 // barcodes, cost price and photo. Past sales, purchases and stock history are kept (they store
 // the item name), so reports stay correct.
-export async function deleteItem(itemId) {
-  const vs = await getDocs(query(collection(db, 'variants'), where('itemId', '==', itemId)))
+export function deleteItem(itemId, variants) {
   const b = writeBatch(db)
-  for (const v of vs.docs) {
-    const code = v.data().barcode
-    if (code) b.delete(doc(db, 'barcodes', code))
-    b.delete(v.ref)
+  for (const v of variants) {
+    if (v.barcode) b.delete(doc(db, 'barcodes', v.barcode))
+    b.delete(doc(db, 'variants', v.id))
   }
   b.delete(doc(db, 'itemCosts', itemId))
   b.delete(doc(db, 'itemImages', itemId))
   b.delete(doc(db, 'items', itemId))
-  await b.commit()
+  // applied on the phone at once (works offline); Firebase syncs it when online
+  return b.commit()
 }
 
 export async function saveItem({ itemId, item, rows, cost, original = [], user, stockByAdmin = false }) {
